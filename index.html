@@ -19,24 +19,10 @@
 
   <main class="main">
 
-    <!-- Extension Manager -->
+    <!-- Extension Manager (ALL extensions) -->
     <section id="extensionPanel" class="panel active">
       <h1>Extension Manager</h1>
-      <div id="extInfo">
-        <img id="extIcon" class="ext-icon" alt="Extension icon">
-        <div>
-          <div><strong>Name:</strong> <span id="extName"></span></div>
-          <div><strong>ID:</strong> <span id="extId"></span></div>
-          <div><strong>Description:</strong> <span id="extDesc"></span></div>
-          <div>
-            <strong>Enabled:</strong>
-            <label class="switch">
-              <input type="checkbox" id="extEnabledToggle">
-              <span class="slider"></span>
-            </label>
-          </div>
-        </div>
-      </div>
+      <div id="extensionsGrid"></div>
       <pre id="extensionOutput"></pre>
     </section>
 
@@ -62,9 +48,7 @@
       </div>
 
       <h2>Tab Viewer</h2>
-      <button id="captureTab">Capture Active Tab</button>
-      <video id="tabPreview" autoplay playsinline></video>
-
+      <button id="openViewer">Open Tab Viewer Page</button>
       <pre id="tabsOutput"></pre>
     </section>
 
