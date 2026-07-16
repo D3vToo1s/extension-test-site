@@ -4,7 +4,7 @@ function sendToExtension(payload) {
   window.postMessage({ type: "BM_COMMAND", payload }, "*");
 }
 
-// Generic response handler
+// Generic response handler for raw output
 window.addEventListener("message", (event) => {
   if (event.data.type !== "BM_RESPONSE") return;
 
@@ -30,10 +30,10 @@ document.querySelectorAll(".nav-btn").forEach(btn => {
   });
 });
 
-// EXTENSION MANAGER
-function loadExtensionInfo() {
+// EXTENSION MANAGER (ALL extensions)
+function loadAllExtensions() {
   sendToExtension({
-    action: "GET_EXTENSION_INFO",
+    action: "GET_ALL_EXTENSIONS",
     target: "extensionOutput"
   });
 }
@@ -42,29 +42,64 @@ window.addEventListener("message", (event) => {
   if (event.data.type !== "BM_RESPONSE") return;
   const { target, data } = event.data.payload;
 
-  if (target === "extensionOutput" && data) {
-    document.getElementById("extName").textContent = data.name || "";
-    document.getElementById("extId").textContent = data.id || "";
-    document.getElementById("extDesc").textContent = data.description || "";
-    const iconEl = document.getElementById("extIcon");
-    if (data.icons && data.icons.length) {
-      iconEl.src = data.icons[data.icons.length - 1].url;
-    }
-    document.getElementById("extEnabledToggle").checked = !!data.enabled;
+  if (target === "extensionOutput" && Array.isArray(data)) {
+    const grid = document.getElementById("extensionsGrid");
+    grid.innerHTML = "";
+
+    data.forEach(ext => {
+      const card = document.createElement("div");
+      card.className = "extension-card";
+
+      const icon = document.createElement("img");
+      icon.className = "extension-icon";
+      if (ext.icons && ext.icons.length) {
+        icon.src = ext.icons[ext.icons.length - 1].url;
+      } else {
+        icon.src = "";
+      }
+
+      const info = document.createElement("div");
+      info.className = "extension-info";
+
+      const name = document.createElement("div");
+      name.className = "extension-name";
+      name.textContent = ext.name;
+
+      const desc = document.createElement("div");
+      desc.className = "extension-desc";
+      desc.textContent = ext.description || "";
+
+      const toggleLabel = document.createElement("label");
+      toggleLabel.className = "switch";
+
+      const toggleInput = document.createElement("input");
+      toggleInput.type = "checkbox";
+      toggleInput.checked = !!ext.enabled;
+      toggleInput.addEventListener("change", () => {
+        sendToExtension({
+          action: "SET_EXTENSION_ENABLED",
+          id: ext.id,
+          enabled: toggleInput.checked,
+          target: "extensionOutput"
+        });
+      });
+
+      const slider = document.createElement("span");
+      slider.className = "slider";
+
+      toggleLabel.appendChild(toggleInput);
+      toggleLabel.appendChild(slider);
+
+      info.appendChild(name);
+      info.appendChild(desc);
+      info.appendChild(toggleLabel);
+
+      card.appendChild(icon);
+      card.appendChild(info);
+
+      grid.appendChild(card);
+    });
   }
-});
-
-document.getElementById("extEnabledToggle").addEventListener("change", (e) => {
-  const enabled = e.target.checked;
-  const id = document.getElementById("extId").textContent;
-  if (!id) return;
-
-  sendToExtension({
-    action: "SET_EXTENSION_ENABLED",
-    id,
-    enabled,
-    target: "extensionOutput"
-  });
 });
 
 // TABS
@@ -111,7 +146,6 @@ window.addEventListener("message", (event) => {
 
 document.getElementById("refreshTabs").onclick = refreshTabs;
 
-// Per-tab controls
 function getSelectedTabId(selectId) {
   const val = document.getElementById(selectId).value;
   return val ? parseInt(val, 10) : null;
@@ -153,13 +187,12 @@ document.getElementById("unpinTab").onclick = () => {
   sendToExtension({ action: "UNPIN_TAB", tabId, target: "tabsOutput" });
 };
 
-// Tab viewer (note: actual video capture requires userMedia bridge; here we just show status)
-document.getElementById("captureTab").onclick = () => {
+// Tab viewer: open extension page
+document.getElementById("openViewer").onclick = () => {
   sendToExtension({
-    action: "CAPTURE_TAB",
+    action: "OPEN_TAB_VIEWER",
     target: "tabsOutput"
   });
-  // For real video: you'd call getUserMedia with chrome.tabCapture constraints in an extension page.
 };
 
 // SCRIPT INJECTOR
@@ -220,5 +253,5 @@ document.getElementById("listDownloads").onclick = () => {
 };
 
 // Initial load
-loadExtensionInfo();
+loadAllExtensions();
 refreshTabs();
