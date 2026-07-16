@@ -1,5 +1,3 @@
-// ui.js
-
 function sendToExtension(payload) {
   window.postMessage({ type: "BM_COMMAND", payload }, "*");
 }
@@ -8,7 +6,6 @@ window.addEventListener("message", (event) => {
   if (event.data.type !== "BM_RESPONSE") return;
 
   const { target, data } = event.data.payload;
-
   if (target && data) {
     document.getElementById(target).textContent =
       JSON.stringify(data, null, 2);
@@ -17,10 +14,7 @@ window.addEventListener("message", (event) => {
 
 // Tabs
 document.getElementById("listTabs").onclick = () => {
-  sendToExtension({
-    action: "LIST_TABS",
-    target: "tabsOutput"
-  });
+  sendToExtension({ action: "LIST_TABS", target: "tabsOutput" });
 };
 
 // Inject Script
