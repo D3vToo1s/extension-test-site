@@ -29,7 +29,7 @@
 
     <!-- Tab Manager -->
     <section id="tabsPanel" class="panel">
-      <h1>Tab Manager</h1>
+      <h1>Tab Manager</hh1>
       <button id="refreshTabs">Refresh Tabs</button>
       <ul id="tabsList"></ul>
 
@@ -73,12 +73,23 @@
 
       <br><br>
 
+      <label>
+        Saved Scripts:
+        <select id="savedScriptDropdown">
+          <option value="">Select a saved script...</option>
+        </select>
+      </label>
+
+      <br><br>
+
       <textarea id="scriptInput">// JS to inject into selected tab</textarea>
       <button id="injectScript">Inject Script</button>
+      <button id="runSavedScript">Run Saved Script (Selected)</button>
+
       <pre id="injectOutput"></pre>
     </section>
 
-    <!-- Saved Scripts (userScripts) -->
+    <!-- Saved Scripts -->
     <section id="userScriptsPanel" class="panel">
       <h1>Saved Scripts (userScripts)</h1>
 
@@ -94,7 +105,7 @@
         </label>
 
         <label>
-          Matches (one per line, default &lt;all_urls&gt;):
+          Matches (one per line):
           <textarea id="usMatches" placeholder="<all_urls>"></textarea>
         </label>
 
