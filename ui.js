@@ -270,7 +270,7 @@ document.getElementById("searchHistory").onclick = () => {
 // DOWNLOADS
 document.getElementById("listDownloads").onclick = () => {
   sendToExtension({
-    action: "LIST_DOWNLOADS",
+    action: "LIST_DOWNLOADLOADS",
     query: {},
     target: "downloadsOutput"
   });
@@ -386,3 +386,42 @@ function populateSavedScriptDropdown(scripts) {
 // Run saved script on selected tab
 document.getElementById("runSavedScript").onclick = () => {
   const tabId = getSelectedTabId("injectTabSelect");
+  if (!tabId) return alert("Select a tab first");
+
+  const dropdown = document.getElementById("savedScriptDropdown");
+  const scriptId = dropdown.value;
+  if (!scriptId) return alert("Select a saved script first");
+
+  sendToExtension({
+    action: "LIST_USER_SCRIPTS",
+    target: "injectOutput"
+  });
+
+  window.addEventListener("message", function handler(event) {
+    if (event.data.type !== "BM_RESPONSE") return;
+    const payload = event.data.payload;
+    if (payload.target !== "injectOutput") return;
+
+    const scripts = payload.data || [];
+    const script = scripts.find(s => s.id === scriptId);
+    if (!script) {
+      alert("Script not found");
+      window.removeEventListener("message", handler);
+      return;
+    }
+
+    sendToExtension({
+      action: "INJECT_SCRIPT",
+      tabId,
+      code: script.code,
+      target: "injectOutput"
+    });
+
+    window.removeEventListener("message", handler);
+  });
+};
+
+// Initial load
+loadAllExtensions();
+refreshTabs();
+document.getElementById("loadUserScripts").click();
