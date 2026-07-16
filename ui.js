@@ -195,59 +195,68 @@ document.getElementById("openViewer").onclick = () => {
   });
 };
 
-// SCRIPT INJECTOR — Guaranteed Reload → Execute flow
+// SCRIPT INJECTOR — Immediate execution (no reload)
 document.getElementById("injectScript").onclick = () => {
   const tabId = getSelectedTabId("injectTabSelect");
   const code = document.getElementById("scriptInput").value;
   if (!tabId || !code) return;
 
-  // Step 1: Reload the tab
   sendToExtension({
-    action: "RELOAD_TAB",
+    action: "INJECT_SCRIPT",
     tabId,
+    code,
     target: "injectOutput"
   });
-
-  // Step 2: Poll until tab is fully loaded
-  const waitForLoad = setInterval(() => {
-    chrome.tabs.get(tabId, (tab) => {
-      if (tab && tab.status === "complete") {
-        clearInterval(waitForLoad);
-
-        // Step 3: Inject script AFTER reload completes
-        sendToExtension({
-          action: "INJECT_SCRIPT",
-          tabId,
-          code,
-          target: "injectOutput"
-        });
-      }
-    });
-  }, 300);
 };
 
-// Script presets
+// 10 SCRIPT PRESETS
 const presets = {
-  logUrl: `
-    console.log("Current URL:", window.location.href);
-  `,
-  highlight: `
+  alertHi: `alert("hi");`,
+  logUrl: `console.log("URL:", window.location.href);`,
+  highlightLinks: `
     document.querySelectorAll('a').forEach(a => {
       a.style.background = 'yellow';
       a.style.color = 'black';
     });
   `,
-  alert: `
-    alert("Page title: " + document.title);
+  removeImages: `
+    document.querySelectorAll('img').forEach(img => img.remove());
+  `,
+  rainbowBg: `
+    document.body.style.background = "linear-gradient(45deg, red, orange, yellow, green, blue, purple)";
+  `,
+  invertColors: `
+    document.documentElement.style.filter = "invert(1)";
+  `,
+  bigCursor: `
+    document.body.style.cursor = "url('https://cur.cursors-4u.net/cursors/cur-2/cur115.cur'), auto";
+  `,
+  removeCSS: `
+    document.querySelectorAll('style, link[rel="stylesheet"]').forEach(e => e.remove());
+  `,
+  autoScroll: `
+    setInterval(() => window.scrollBy(0, 50), 200);
+  `,
+  spamConsole: `
+    setInterval(() => console.log("Browser Manager!"), 100);
   `
 };
 
-document.querySelectorAll(".preset-btn").forEach(btn => {
-  btn.addEventListener("click", () => {
-    const key = btn.dataset.preset;
-    if (!key || !presets[key]) return;
+// Populate dropdown
+const presetDropdown = document.getElementById("presetDropdown");
+Object.entries(presets).forEach(([key, value]) => {
+  const opt = document.createElement("option");
+  opt.value = key;
+  opt.textContent = key;
+  presetDropdown.appendChild(opt);
+});
+
+// Load preset into textarea
+presetDropdown.addEventListener("change", () => {
+  const key = presetDropdown.value;
+  if (presets[key]) {
     document.getElementById("scriptInput").value = presets[key].trim();
-  });
+  }
 });
 
 // HISTORY
