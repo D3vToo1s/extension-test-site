@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Browser Manager Control Panel</title>
+  <link rel="stylesheet" href="ui.css">
+</head>
+<body>
+
+<h1>Browser Manager Control Panel</h1>
+
+<div class="section">
+  <h2>Tabs</h2>
+  <button id="listTabs">List Tabs</button>
+  <pre id="tabsOutput"></pre>
+</div>
+
+<div class="section">
+  <h2>Inject Script</h2>
+  <textarea id="scriptInput">// Write JS to inject into active tab</textarea>
+  <button id="injectScript">Inject</button>
+  <pre id="injectOutput"></pre>
+</div>
+
+<div class="section">
+  <h2>Wipe Browsing Data</h2>
+  <button id="wipeData">Wipe Cookies, Cache, History</button>
+  <pre id="wipeOutput"></pre>
+</div>
+
+<div class="section">
+  <h2>Downloads</h2>
+  <button id="listDownloads">List Downloads</button>
+  <pre id="downloadsOutput"></pre>
+</div>
+
+<div class="section">
+  <h2>History</h2>
+  <input id="historySearch" placeholder="Search history text">
+  <button id="searchHistory">Search</button>
+  <pre id="historyOutput"></pre>
+</div>
+
+<script src="ui.js"></script>
+</body>
+</html>
