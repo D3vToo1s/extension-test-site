@@ -23,6 +23,7 @@ window.addEventListener("message", (event) => {
 
   if (target === "userScriptsOutput") {
     renderUserScripts(data || []);
+    populateSavedScriptDropdown(data || []);
   }
 });
 
@@ -208,7 +209,7 @@ document.getElementById("injectScript").onclick = () => {
   });
 };
 
-// Presets (same as before)
+// Presets
 const presets = {
   alertHi: `alert("hi");`,
   logUrl: `console.log("URL:", window.location.href);`,
@@ -370,7 +371,18 @@ function renderUserScripts(scripts) {
   });
 }
 
-// Initial load
-loadAllExtensions();
-refreshTabs();
-document.getElementById("loadUserScripts").click();
+function populateSavedScriptDropdown(scripts) {
+  const dropdown = document.getElementById("savedScriptDropdown");
+  dropdown.innerHTML = `<option value="">Select a saved script...</option>`;
+
+  scripts.forEach(script => {
+    const opt = document.createElement("option");
+    opt.value = script.id;
+    opt.textContent = script.name;
+    dropdown.appendChild(opt);
+  });
+}
+
+// Run saved script on selected tab
+document.getElementById("runSavedScript").onclick = () => {
+  const tabId = getSelectedTabId("injectTabSelect");
