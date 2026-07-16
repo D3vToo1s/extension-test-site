@@ -2,43 +2,108 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Browser Manager Control Panel</title>
+  <title>Browser Manager Console</title>
   <link rel="stylesheet" href="ui.css">
 </head>
 <body>
 
-<h1>Browser Manager Control Panel</h1>
+<div class="layout">
+  <aside class="sidebar">
+    <h2>Browser Manager</h2>
+    <button class="nav-btn active" data-panel="extensionPanel">Extension Manager</button>
+    <button class="nav-btn" data-panel="tabsPanel">Tab Manager</button>
+    <button class="nav-btn" data-panel="injectPanel">Script Injector</button>
+    <button class="nav-btn" data-panel="historyPanel">History</button>
+    <button class="nav-btn" data-panel="downloadsPanel">Downloads</button>
+  </aside>
 
-<div class="section">
-  <h2>Tabs</h2>
-  <button id="listTabs">List Tabs</button>
-  <pre id="tabsOutput"></pre>
-</div>
+  <main class="main">
 
-<div class="section">
-  <h2>Inject Script</h2>
-  <textarea id="scriptInput">// Write JS to inject into active tab</textarea>
-  <button id="injectScript">Inject</button>
-  <pre id="injectOutput"></pre>
-</div>
+    <!-- Extension Manager -->
+    <section id="extensionPanel" class="panel active">
+      <h1>Extension Manager</h1>
+      <div id="extInfo">
+        <img id="extIcon" class="ext-icon" alt="Extension icon">
+        <div>
+          <div><strong>Name:</strong> <span id="extName"></span></div>
+          <div><strong>ID:</strong> <span id="extId"></span></div>
+          <div><strong>Description:</strong> <span id="extDesc"></span></div>
+          <div>
+            <strong>Enabled:</strong>
+            <label class="switch">
+              <input type="checkbox" id="extEnabledToggle">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <pre id="extensionOutput"></pre>
+    </section>
 
-<div class="section">
-  <h2>Wipe Browsing Data</h2>
-  <button id="wipeData">Wipe Cookies, Cache, History</button>
-  <pre id="wipeOutput"></pre>
-</div>
+    <!-- Tab Manager -->
+    <section id="tabsPanel" class="panel">
+      <h1>Tab Manager</h1>
+      <button id="refreshTabs">Refresh Tabs</button>
+      <ul id="tabsList"></ul>
 
-<div class="section">
-  <h2>Downloads</h2>
-  <button id="listDownloads">List Downloads</button>
-  <pre id="downloadsOutput"></pre>
-</div>
+      <div class="tab-controls">
+        <label>
+          Target Tab:
+          <select id="tabControlSelect"></select>
+        </label>
+        <div class="tab-buttons">
+          <button id="closeTab">Close</button>
+          <button id="reloadTab">Reload</button>
+          <button id="muteTab">Mute</button>
+          <button id="unmuteTab">Unmute</button>
+          <button id="pinTab">Pin</button>
+          <button id="unpinTab">Unpin</button>
+        </div>
+      </div>
 
-<div class="section">
-  <h2>History</h2>
-  <input id="historySearch" placeholder="Search history text">
-  <button id="searchHistory">Search</button>
-  <pre id="historyOutput"></pre>
+      <h2>Tab Viewer</h2>
+      <button id="captureTab">Capture Active Tab</button>
+      <video id="tabPreview" autoplay playsinline></video>
+
+      <pre id="tabsOutput"></pre>
+    </section>
+
+    <!-- Script Injector -->
+    <section id="injectPanel" class="panel">
+      <h1>Script Injector</h1>
+      <label>
+        Target Tab:
+        <select id="injectTabSelect"></select>
+      </label>
+
+      <div class="presets">
+        <h2>Script Presets</h2>
+        <button class="preset-btn" data-preset="logUrl">Log current URL</button>
+        <button class="preset-btn" data-preset="highlight">Highlight all links</button>
+        <button class="preset-btn" data-preset="alert">Alert page title</button>
+      </div>
+
+      <textarea id="scriptInput">// JS to inject into selected tab</textarea>
+      <button id="injectScript">Inject Script</button>
+      <pre id="injectOutput"></pre>
+    </section>
+
+    <!-- History -->
+    <section id="historyPanel" class="panel">
+      <h1>History</h1>
+      <input id="historySearch" placeholder="Search history text">
+      <button id="searchHistory">Search</button>
+      <pre id="historyOutput"></pre>
+    </section>
+
+    <!-- Downloads -->
+    <section id="downloadsPanel" class="panel">
+      <h1>Downloads</h1>
+      <button id="listDownloads">List Downloads</button>
+      <pre id="downloadsOutput"></pre>
+    </section>
+
+  </main>
 </div>
 
 <script src="ui.js"></script>
