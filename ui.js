@@ -1,4 +1,4 @@
-// ui.js — front-end controller
+// ui.js — front-end controller + userScripts UI
 
 function sendToExtension(payload) {
   window.postMessage({ type: "BM_COMMAND", payload }, "*");
@@ -8,7 +8,8 @@ function sendToExtension(payload) {
 window.addEventListener("message", (event) => {
   if (event.data.type !== "BM_RESPONSE") return;
 
-  const { target, data, action } = event.data.payload;
+  const payload = event.data.payload || {};
+  const { target, data, action } = payload;
 
   if (action === "TABS_UPDATED") {
     refreshTabs();
@@ -18,6 +19,10 @@ window.addEventListener("message", (event) => {
   if (target) {
     const el = document.getElementById(target);
     if (el) el.textContent = JSON.stringify(data, null, 2);
+  }
+
+  if (target === "userScriptsOutput") {
+    renderUserScripts(data || []);
   }
 });
 
@@ -203,7 +208,7 @@ document.getElementById("injectScript").onclick = () => {
   });
 };
 
-// 10 SCRIPT PRESETS
+// Presets (same as before)
 const presets = {
   alertHi: `alert("hi");`,
   logUrl: `console.log("URL:", window.location.href);`,
@@ -223,7 +228,7 @@ const presets = {
     document.documentElement.style.filter = "invert(1)";
   `,
   bigCursor: `
-    document.body.style.cursor = "url('https://cur.cursors-4u.net/cursors/cur-2/cur115.cur'), auto";
+    document.body.style.cursor = "crosshair";
   `,
   removeCSS: `
     document.querySelectorAll('style, link[rel="stylesheet"]').forEach(e => e.remove());
@@ -236,7 +241,6 @@ const presets = {
   `
 };
 
-// Populate dropdown
 const presetDropdown = document.getElementById("presetDropdown");
 Object.entries(presets).forEach(([key]) => {
   const opt = document.createElement("option");
@@ -245,7 +249,6 @@ Object.entries(presets).forEach(([key]) => {
   presetDropdown.appendChild(opt);
 });
 
-// Load preset into textarea
 presetDropdown.addEventListener("change", () => {
   const key = presetDropdown.value;
   if (presets[key]) {
@@ -272,6 +275,102 @@ document.getElementById("listDownloads").onclick = () => {
   });
 };
 
+// USER SCRIPTS UI
+
+document.getElementById("loadUserScripts").onclick = () => {
+  sendToExtension({
+    action: "LIST_USER_SCRIPTS",
+    target: "userScriptsOutput"
+  });
+};
+
+document.getElementById("saveUserScript").onclick = () => {
+  const id = document.getElementById("usId").value.trim() || crypto.randomUUID();
+  const name = document.getElementById("usName").value.trim() || id;
+  const matchesRaw = document.getElementById("usMatches").value.trim();
+  const code = document.getElementById("usCode").value;
+  const auto = document.getElementById("usAuto").checked;
+  const runAt = document.getElementById("usRunAt").value || "document_end";
+
+  const matches = matchesRaw
+    ? matchesRaw.split("\n").map(s => s.trim()).filter(Boolean)
+    : ["<all_urls>"];
+
+  const script = { id, name, matches, code, auto, runAt };
+
+  sendToExtension({
+    action: "SAVE_USER_SCRIPT",
+    script,
+    target: "userScriptsOutput"
+  });
+};
+
+function renderUserScripts(scripts) {
+  const list = document.getElementById("userScriptsList");
+  list.innerHTML = "";
+
+  scripts.forEach(script => {
+    const item = document.createElement("div");
+    item.className = "user-script-item";
+
+    const title = document.createElement("div");
+    title.className = "user-script-title";
+    title.textContent = `${script.name} (${script.id})`;
+
+    const meta = document.createElement("div");
+    meta.className = "user-script-meta";
+    meta.textContent = `Matches: ${script.matches?.join(", ") || "<all_urls>"} | runAt: ${script.runAt || "document_end"} | auto: ${script.auto ? "yes" : "no"}`;
+
+    const buttons = document.createElement("div");
+    buttons.className = "user-script-buttons";
+
+    const runBtn = document.createElement("button");
+    runBtn.textContent = "Run now (current tab)";
+    runBtn.onclick = () => {
+      const tabId = getSelectedTabId("injectTabSelect");
+      if (!tabId) return;
+      sendToExtension({
+        action: "INJECT_SCRIPT",
+        tabId,
+        code: script.code,
+        target: "injectOutput"
+      });
+    };
+
+    const loadBtn = document.createElement("button");
+    loadBtn.textContent = "Load into editor";
+    loadBtn.onclick = () => {
+      document.getElementById("usId").value = script.id;
+      document.getElementById("usName").value = script.name || "";
+      document.getElementById("usMatches").value = (script.matches || ["<all_urls>"]).join("\n");
+      document.getElementById("usCode").value = script.code || "";
+      document.getElementById("usAuto").checked = !!script.auto;
+      document.getElementById("usRunAt").value = script.runAt || "document_end";
+    };
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.textContent = "Delete";
+    deleteBtn.onclick = () => {
+      sendToExtension({
+        action: "DELETE_USER_SCRIPT",
+        id: script.id,
+        target: "userScriptsOutput"
+      });
+    };
+
+    buttons.appendChild(runBtn);
+    buttons.appendChild(loadBtn);
+    buttons.appendChild(deleteBtn);
+
+    item.appendChild(title);
+    item.appendChild(meta);
+    item.appendChild(buttons);
+
+    list.appendChild(item);
+  });
+}
+
 // Initial load
 loadAllExtensions();
 refreshTabs();
+document.getElementById("loadUserScripts").click();
