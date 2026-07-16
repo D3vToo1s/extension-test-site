@@ -10,12 +10,14 @@
 <div class="layout">
   <aside class="sidebar">
     <h2>Browser Manager</h2>
+
     <button class="nav-btn active" data-panel="extensionPanel">Extension Manager</button>
     <button class="nav-btn" data-panel="tabsPanel">Tab Manager</button>
     <button class="nav-btn" data-panel="injectPanel">Script Injector</button>
     <button class="nav-btn" data-panel="userScriptsPanel">Saved Scripts</button>
     <button class="nav-btn" data-panel="historyPanel">History</button>
     <button class="nav-btn" data-panel="downloadsPanel">Downloads</button>
+    <button class="nav-btn" data-panel="notificationsPanel">Notifications</button>
   </aside>
 
   <main class="main">
@@ -30,6 +32,7 @@
     <!-- Tab Manager -->
     <section id="tabsPanel" class="panel">
       <h1>Tab Manager</h1>
+
       <button id="refreshTabs">Refresh Tabs</button>
       <ul id="tabsList"></ul>
 
@@ -38,6 +41,7 @@
           Target Tab:
           <select id="tabControlSelect"></select>
         </label>
+
         <div class="tab-buttons">
           <button id="closeTab">Close</button>
           <button id="reloadTab">Reload</button>
@@ -83,6 +87,7 @@
       <br><br>
 
       <textarea id="scriptInput">// JS to inject into selected tab</textarea>
+
       <button id="injectScript">Inject Script</button>
       <button id="runSavedScript">Run Saved Script (Selected)</button>
 
@@ -94,6 +99,7 @@
       <h1>Saved Scripts (userScripts)</h1>
 
       <div class="user-scripts-editor">
+
         <label>
           Script ID (optional):
           <input id="usId" placeholder="auto-generated if empty">
@@ -140,16 +146,53 @@
     <!-- History -->
     <section id="historyPanel" class="panel">
       <h1>History</h1>
+
       <input id="historySearch" placeholder="Search history text">
       <button id="searchHistory">Search</button>
+
       <pre id="historyOutput"></pre>
     </section>
 
     <!-- Downloads -->
     <section id="downloadsPanel" class="panel">
       <h1>Downloads</h1>
+
       <button id="listDownloads">List Downloads</button>
       <pre id="downloadsOutput"></pre>
+    </section>
+
+    <!-- Notifications -->
+    <section id="notificationsPanel" class="panel">
+      <h1>Notification Manager</h1>
+
+      <h2>Browser Notification Status</h2>
+      <div id="notifStatusBox">
+        <p>Current permission: <strong id="notifPermission">loading...</strong></p>
+        <button id="requestNotifPermission">Request Permission</button>
+      </div>
+
+      <hr>
+
+      <h2>Send Custom Notification</h2>
+
+      <label>
+        Title:
+        <input id="notifTitle" placeholder="Notification Title">
+      </label>
+
+      <label>
+        Body:
+        <input id="notifBody" placeholder="Notification Body">
+      </label>
+
+      <label>
+        Icon URL (optional):
+        <input id="notifIcon" placeholder="https://example.com/icon.png">
+      </label>
+
+      <button id="sendCustomNotif">Send Notification</button>
+
+      <pre id="notifOutput"></pre>
     </section>
 
   </main>
