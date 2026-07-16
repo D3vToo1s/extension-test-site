@@ -195,7 +195,7 @@ document.getElementById("openViewer").onclick = () => {
   });
 };
 
-// SCRIPT INJECTOR — Reload → Execute flow
+// SCRIPT INJECTOR — Guaranteed Reload → Execute flow
 document.getElementById("injectScript").onclick = () => {
   const tabId = getSelectedTabId("injectTabSelect");
   const code = document.getElementById("scriptInput").value;
@@ -208,15 +208,22 @@ document.getElementById("injectScript").onclick = () => {
     target: "injectOutput"
   });
 
-  // Step 2: Inject after reload
-  setTimeout(() => {
-    sendToExtension({
-      action: "INJECT_SCRIPT",
-      tabId,
-      code,
-      target: "injectOutput"
+  // Step 2: Poll until tab is fully loaded
+  const waitForLoad = setInterval(() => {
+    chrome.tabs.get(tabId, (tab) => {
+      if (tab && tab.status === "complete") {
+        clearInterval(waitForLoad);
+
+        // Step 3: Inject script AFTER reload completes
+        sendToExtension({
+          action: "INJECT_SCRIPT",
+          tabId,
+          code,
+          target: "injectOutput"
+        });
+      }
     });
-  }, 800);
+  }, 300);
 };
 
 // Script presets
