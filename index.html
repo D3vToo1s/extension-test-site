@@ -13,6 +13,7 @@
     <button class="nav-btn active" data-panel="extensionPanel">Extension Manager</button>
     <button class="nav-btn" data-panel="tabsPanel">Tab Manager</button>
     <button class="nav-btn" data-panel="injectPanel">Script Injector</button>
+    <button class="nav-btn" data-panel="userScriptsPanel">Saved Scripts</button>
     <button class="nav-btn" data-panel="historyPanel">History</button>
     <button class="nav-btn" data-panel="downloadsPanel">Downloads</button>
   </aside>
@@ -75,6 +76,54 @@
       <textarea id="scriptInput">// JS to inject into selected tab</textarea>
       <button id="injectScript">Inject Script</button>
       <pre id="injectOutput"></pre>
+    </section>
+
+    <!-- Saved Scripts (userScripts) -->
+    <section id="userScriptsPanel" class="panel">
+      <h1>Saved Scripts (userScripts)</h1>
+
+      <div class="user-scripts-editor">
+        <label>
+          Script ID (optional):
+          <input id="usId" placeholder="auto-generated if empty">
+        </label>
+
+        <label>
+          Name:
+          <input id="usName" placeholder="My Script">
+        </label>
+
+        <label>
+          Matches (one per line, default &lt;all_urls&gt;):
+          <textarea id="usMatches" placeholder="<all_urls>"></textarea>
+        </label>
+
+        <label>
+          runAt:
+          <select id="usRunAt">
+            <option value="document_start">document_start</option>
+            <option value="document_end" selected>document_end</option>
+            <option value="document_idle">document_idle</option>
+          </select>
+        </label>
+
+        <label>
+          Auto-execute:
+          <input type="checkbox" id="usAuto">
+        </label>
+
+        <label>
+          Script code:
+          <textarea id="usCode" placeholder="// JS that will run via chrome.userScripts"></textarea>
+        </label>
+
+        <button id="saveUserScript">Save Script</button>
+        <button id="loadUserScripts">Reload Saved Scripts</button>
+      </div>
+
+      <h2>Saved Scripts</h2>
+      <div id="userScriptsList"></div>
+      <pre id="userScriptsOutput"></pre>
     </section>
 
     <!-- History -->
