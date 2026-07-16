@@ -4,17 +4,21 @@ function sendToExtension(payload) {
   window.postMessage({ type: "BM_COMMAND", payload }, "*");
 }
 
-// Generic response handler for raw output
+// Handle extension responses + dynamic tab updates
 window.addEventListener("message", (event) => {
   if (event.data.type !== "BM_RESPONSE") return;
 
-  const { target, data } = event.data.payload;
-  if (!target) return;
+  const { target, data, action } = event.data.payload;
 
-  const el = document.getElementById(target);
-  if (!el) return;
+  if (action === "TABS_UPDATED") {
+    refreshTabs();
+    return;
+  }
 
-  el.textContent = JSON.stringify(data, null, 2);
+  if (target) {
+    const el = document.getElementById(target);
+    if (el) el.textContent = JSON.stringify(data, null, 2);
+  }
 });
 
 // Sidebar navigation
@@ -30,7 +34,7 @@ document.querySelectorAll(".nav-btn").forEach(btn => {
   });
 });
 
-// EXTENSION MANAGER (ALL extensions)
+// EXTENSION MANAGER
 function loadAllExtensions() {
   sendToExtension({
     action: "GET_ALL_EXTENSIONS",
@@ -52,11 +56,7 @@ window.addEventListener("message", (event) => {
 
       const icon = document.createElement("img");
       icon.className = "extension-icon";
-      if (ext.icons && ext.icons.length) {
-        icon.src = ext.icons[ext.icons.length - 1].url;
-      } else {
-        icon.src = "";
-      }
+      icon.src = ext.icons?.[ext.icons.length - 1]?.url || "";
 
       const info = document.createElement("div");
       info.className = "extension-info";
@@ -74,7 +74,7 @@ window.addEventListener("message", (event) => {
 
       const toggleInput = document.createElement("input");
       toggleInput.type = "checkbox";
-      toggleInput.checked = !!ext.enabled;
+      toggleInput.checked = ext.enabled;
       toggleInput.addEventListener("change", () => {
         sendToExtension({
           action: "SET_EXTENSION_ENABLED",
@@ -118,6 +118,7 @@ window.addEventListener("message", (event) => {
 
   if (target === "tabsOutput" && Array.isArray(data)) {
     currentTabs = data;
+
     const list = document.getElementById("tabsList");
     const injectSelect = document.getElementById("injectTabSelect");
     const controlSelect = document.getElementById("tabControlSelect");
@@ -147,47 +148,40 @@ window.addEventListener("message", (event) => {
 document.getElementById("refreshTabs").onclick = refreshTabs;
 
 function getSelectedTabId(selectId) {
-  const val = document.getElementById(selectId).value;
-  return val ? parseInt(val, 10) : null;
+  return parseInt(document.getElementById(selectId).value || "0", 10);
 }
 
 document.getElementById("closeTab").onclick = () => {
   const tabId = getSelectedTabId("tabControlSelect");
-  if (!tabId) return;
-  sendToExtension({ action: "CLOSE_TAB", tabId, target: "tabsOutput" });
+  if (tabId) sendToExtension({ action: "CLOSE_TAB", tabId, target: "tabsOutput" });
 };
 
 document.getElementById("reloadTab").onclick = () => {
   const tabId = getSelectedTabId("tabControlSelect");
-  if (!tabId) return;
-  sendToExtension({ action: "RELOAD_TAB", tabId, target: "tabsOutput" });
+  if (tabId) sendToExtension({ action: "RELOAD_TAB", tabId, target: "tabsOutput" });
 };
 
 document.getElementById("muteTab").onclick = () => {
   const tabId = getSelectedTabId("tabControlSelect");
-  if (!tabId) return;
-  sendToExtension({ action: "MUTE_TAB", tabId, target: "tabsOutput" });
+  if (tabId) sendToExtension({ action: "MUTE_TAB", tabId, target: "tabsOutput" });
 };
 
 document.getElementById("unmuteTab").onclick = () => {
   const tabId = getSelectedTabId("tabControlSelect");
-  if (!tabId) return;
-  sendToExtension({ action: "UNMUTE_TAB", tabId, target: "tabsOutput" });
+  if (tabId) sendToExtension({ action: "UNMUTE_TAB", tabId, target: "tabsOutput" });
 };
 
 document.getElementById("pinTab").onclick = () => {
   const tabId = getSelectedTabId("tabControlSelect");
-  if (!tabId) return;
-  sendToExtension({ action: "PIN_TAB", tabId, target: "tabsOutput" });
+  if (tabId) sendToExtension({ action: "PIN_TAB", tabId, target: "tabsOutput" });
 };
 
 document.getElementById("unpinTab").onclick = () => {
   const tabId = getSelectedTabId("tabControlSelect");
-  if (!tabId) return;
-  sendToExtension({ action: "UNPIN_TAB", tabId, target: "tabsOutput" });
+  if (tabId) sendToExtension({ action: "UNPIN_TAB", tabId, target: "tabsOutput" });
 };
 
-// Tab viewer: open extension page
+// Tab viewer
 document.getElementById("openViewer").onclick = () => {
   sendToExtension({
     action: "OPEN_TAB_VIEWER",
@@ -195,7 +189,7 @@ document.getElementById("openViewer").onclick = () => {
   });
 };
 
-// SCRIPT INJECTOR — Immediate execution (no reload)
+// SCRIPT INJECTOR — immediate execution
 document.getElementById("injectScript").onclick = () => {
   const tabId = getSelectedTabId("injectTabSelect");
   const code = document.getElementById("scriptInput").value;
@@ -244,7 +238,7 @@ const presets = {
 
 // Populate dropdown
 const presetDropdown = document.getElementById("presetDropdown");
-Object.entries(presets).forEach(([key, value]) => {
+Object.entries(presets).forEach(([key]) => {
   const opt = document.createElement("option");
   opt.value = key;
   opt.textContent = key;
