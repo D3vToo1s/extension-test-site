@@ -195,18 +195,28 @@ document.getElementById("openViewer").onclick = () => {
   });
 };
 
-// SCRIPT INJECTOR
+// SCRIPT INJECTOR — Reload → Execute flow
 document.getElementById("injectScript").onclick = () => {
   const tabId = getSelectedTabId("injectTabSelect");
   const code = document.getElementById("scriptInput").value;
   if (!tabId || !code) return;
 
+  // Step 1: Reload the tab
   sendToExtension({
-    action: "INJECT_SCRIPT",
+    action: "RELOAD_TAB",
     tabId,
-    code,
     target: "injectOutput"
   });
+
+  // Step 2: Inject after reload
+  setTimeout(() => {
+    sendToExtension({
+      action: "INJECT_SCRIPT",
+      tabId,
+      code,
+      target: "injectOutput"
+    });
+  }, 800);
 };
 
 // Script presets
