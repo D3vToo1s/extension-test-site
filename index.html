@@ -19,7 +19,7 @@
 
   <main class="main">
 
-    <!-- Extension Manager (ALL extensions) -->
+    <!-- Extension Manager -->
     <section id="extensionPanel" class="panel active">
       <h1>Extension Manager</h1>
       <div id="extensionsGrid"></div>
@@ -55,17 +55,22 @@
     <!-- Script Injector -->
     <section id="injectPanel" class="panel">
       <h1>Script Injector</h1>
+
       <label>
         Target Tab:
         <select id="injectTabSelect"></select>
       </label>
 
-      <div class="presets">
-        <h2>Script Presets</h2>
-        <button class="preset-btn" data-preset="logUrl">Log current URL</button>
-        <button class="preset-btn" data-preset="highlight">Highlight all links</button>
-        <button class="preset-btn" data-preset="alert">Alert page title</button>
-      </div>
+      <br><br>
+
+      <label>
+        Example Scripts:
+        <select id="presetDropdown">
+          <option value="">Select a preset...</option>
+        </select>
+      </label>
+
+      <br><br>
 
       <textarea id="scriptInput">// JS to inject into selected tab</textarea>
       <button id="injectScript">Inject Script</button>
