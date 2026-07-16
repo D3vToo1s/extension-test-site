@@ -1,4 +1,4 @@
-// ui.js — front-end controller + userScripts UI
+// ui.js — front-end controller + userScripts + notifications
 
 function sendToExtension(payload) {
   window.postMessage({ type: "BM_COMMAND", payload }, "*");
@@ -270,7 +270,7 @@ document.getElementById("searchHistory").onclick = () => {
 // DOWNLOADS
 document.getElementById("listDownloads").onclick = () => {
   sendToExtension({
-    action: "LIST_DOWNLOADLOADS",
+    action: "LIST_DOWNLOADS",
     query: {},
     target: "downloadsOutput"
   });
@@ -419,6 +419,39 @@ document.getElementById("runSavedScript").onclick = () => {
 
     window.removeEventListener("message", handler);
   });
+};
+
+// NOTIFICATIONS
+
+function updateNotificationStatus() {
+  document.getElementById("notifPermission").textContent = Notification.permission;
+}
+updateNotificationStatus();
+
+document.getElementById("requestNotifPermission").onclick = async () => {
+  const result = await Notification.requestPermission();
+  document.getElementById("notifPermission").textContent = result;
+};
+
+document.getElementById("sendCustomNotif").onclick = () => {
+  const title = document.getElementById("notifTitle").value.trim();
+  const body = document.getElementById("notifBody").value.trim();
+  const icon = document.getElementById("notifIcon").value.trim();
+
+  if (!title) {
+    alert("Notification title required");
+    return;
+  }
+
+  sendToExtension(
+    {
+      action: "SEND_CUSTOM_NOTIFICATION",
+      title,
+      body,
+      icon,
+      target: "notifOutput"
+    }
+  );
 };
 
 // Initial load
