@@ -1,4 +1,5 @@
 // ui.js — Website UI controller (Scripts integrated with userScripts flow)
+// Now with icon proxying: requests chrome:// extension icons from background and falls back to placeholder.
 // Requires window.EXT_ID to be set in index.html to your extension ID.
 
 const EXT_ID = window.EXT_ID || "jldkgbjadfmjfnjlnkpbmbkogimecpng";
@@ -86,44 +87,94 @@ const presets = {
 })();
 
 // -----------------------------
+// Icon proxy helper
+// -----------------------------
+// Ask background to fetch/convert an icon URL to a data URL. Background must implement GET_EXTENSION_ICON_DATA.
+// Returns dataUrl string or null on failure.
+async function getIconDataUrl(iconUrl) {
+  if (!iconUrl) return null;
+  try {
+    const resp = await sendToExtension({ action: "GET_EXTENSION_ICON_DATA", iconUrl });
+    // background may return { dataUrl: "data:..." } or { data: { dataUrl: "..." } } depending on implementation
+    const data = resp?.data ?? resp;
+    if (data?.dataUrl) return data.dataUrl;
+    if (data?.data?.dataUrl) return data.data.dataUrl;
+    // some backgrounds may return { dataUrl: "..."} directly
+    if (resp?.dataUrl) return resp.dataUrl;
+  } catch (e) {
+    // ignore and fall through to null
+  }
+  return null;
+}
+
+// -----------------------------
 // Extensions
 // -----------------------------
 async function loadAllExtensions() {
   try {
     const resp = await sendToExtension({ action: "GET_ALL_EXTENSIONS", target: "extensionOutput" });
     const data = resp?.data ?? resp;
-    renderExtensions(data || []);
+    await renderExtensions(data || []);
     if ($("extensionOutput")) $("extensionOutput").textContent = JSON.stringify(data || [], null, 2);
   } catch (e) {
     console.error("loadAllExtensions", e);
     if ($("extensionOutput")) $("extensionOutput").textContent = String(e);
   }
 }
-function renderExtensions(exts) {
+
+// renderExtensions now attempts to proxy chrome:// icons via background, falling back to placeholder
+async function renderExtensions(exts) {
   const grid = $("extensionsGrid");
   if (!grid) return;
   grid.innerHTML = "";
-  (exts||[]).forEach(ext=>{
+  const placeholder = "icons/placeholder-extension.png"; // ensure this asset exists in your site/extension
+  for (const ext of (exts || [])) {
     const card = document.createElement("div"); card.className="extension-card";
     const icon = document.createElement("img"); icon.className="extension-icon";
-    icon.src = (ext.icons && ext.icons.length) ? ext.icons[ext.icons.length-1].url : "";
     const info = document.createElement("div"); info.className="extension-info";
     const name = document.createElement("div"); name.className="extension-name"; name.textContent = ext.name || ext.id;
     const desc = document.createElement("div"); desc.className="extension-desc"; desc.textContent = ext.description || "";
+
+    // Determine icon URL (prefer largest available)
+    let iconUrl = "";
+    if (ext.icons && ext.icons.length) {
+      // pick the largest icon entry if available
+      const sorted = ext.icons.slice().sort((a,b)=> (b.size||0) - (a.size||0));
+      iconUrl = sorted[0]?.url || "";
+    }
+
+    // If iconUrl is a chrome:// URL, request background to proxy it to a data URL
+    if (iconUrl && iconUrl.startsWith("chrome://")) {
+      // show placeholder while fetching
+      icon.src = placeholder;
+      // attempt to fetch proxied data URL
+      try {
+        const dataUrl = await getIconDataUrl(iconUrl);
+        icon.src = dataUrl || placeholder;
+      } catch (e) {
+        icon.src = placeholder;
+      }
+    } else {
+      // normal URL or missing: use it or fallback
+      icon.src = iconUrl || placeholder;
+    }
+
+    // Build toggle
     const toggleLabel = document.createElement("label"); toggleLabel.className="switch";
-    const toggleInput = document.createElement("input"); toggleInput.type = "checkbox"; toggleInput.checked = !!ext.enabled;
+    const toggleInput = document.createElement("input"); toggleInput.type="checkbox"; toggleInput.checked = !!ext.enabled;
     toggleInput.addEventListener("change", async ()=>{
       try {
         await sendToExtension({ action: "SET_EXTENSION_ENABLED", id: ext.id, enabled: toggleInput.checked, target: "extensionOutput" });
-        loadAllExtensions();
+        await loadAllExtensions();
       } catch (err) { console.error(err); }
     });
     const slider = document.createElement("span"); slider.className="slider";
     toggleLabel.appendChild(toggleInput); toggleLabel.appendChild(slider);
+
     info.appendChild(name); info.appendChild(desc); info.appendChild(toggleLabel);
     card.appendChild(icon); card.appendChild(info);
     grid.appendChild(card);
-  });
+  }
 }
 
 // -----------------------------
@@ -402,9 +453,9 @@ $("listDownloads").onclick = async () => {
   } catch (e) { console.error(e); if ($("downloadsOutput")) $("downloadsOutput").textContent = String(e); }
 };
 
-function updateNotificationStatus() { $("notifPermission").textContent = Notification.permission; }
+function updateNotificationStatus() { if ($("notifPermission")) $("notifPermission").textContent = Notification.permission; }
 updateNotificationStatus();
-$("requestNotifPermission").onclick = async () => { const r = await Notification.requestPermission(); $("notifPermission").textContent = r; };
+$("requestNotifPermission").onclick = async () => { const r = await Notification.requestPermission(); if ($("notifPermission")) $("notifPermission").textContent = r; };
 $("sendCustomNotif").onclick = async () => {
   const title = $("notifTitle").value.trim(); const body = $("notifBody").value.trim(); const icon = $("notifIcon").value.trim();
   if (!title) return alert("Notification title required");
@@ -417,9 +468,6 @@ $("sendCustomNotif").onclick = async () => {
 // -----------------------------
 // Experimental CSP toggle (static declarativeNetRequest ruleset integration)
 // -----------------------------
-// This replaces the previous debugger-based approach and toggles the static ruleset declared in manifest.rule_resources.
-// It sends EXPRIMENTAL_UPDATE with useStaticRuleset: true so the background enables/disables the "csp_ruleset".
-
 let cspRulesetEnabled = false;
 
 function updateCspToggleUI(enabled) {
@@ -465,8 +513,6 @@ async function toggleStaticCspForTab() {
 }
 
 $("expToggleCSP").onclick = toggleStaticCspForTab;
-
-// Initialize CSP UI to off (background is authoritative; UI assumes off until toggled)
 updateCspToggleUI(false);
 
 // -----------------------------
