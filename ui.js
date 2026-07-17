@@ -268,7 +268,7 @@ document.getElementById("searchHistory").onclick = () => {
 // DOWNLOADS
 document.getElementById("listDownloads").onclick = () => {
   sendToExtension({
-    action: "LIST_DOWNLOADS",
+    action: "LIST_DOWNLOADLOADS",
     query: {},
     target: "downloadsOutput"
   });
