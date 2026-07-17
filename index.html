@@ -18,6 +18,7 @@
     <button class="nav-btn" data-panel="historyPanel">History</button>
     <button class="nav-btn" data-panel="downloadsPanel">Downloads</button>
     <button class="nav-btn" data-panel="notificationsPanel">Notifications</button>
+    <button class="nav-btn" data-panel="experimentalPanel">Experimental</button>
   </aside>
 
   <main class="main">
@@ -193,6 +194,31 @@
       <button id="sendCustomNotif">Send Notification</button>
 
       <pre id="notifOutput"></pre>
+    </section>
+
+    <!-- Experimental Settings -->
+    <section id="experimentalPanel" class="panel">
+      <h1>Experimental Settings</h1>
+
+      <div class="exp-setting">
+        <label class="exp-label">
+          <input type="checkbox" id="expDisableCSP">
+          Disable all CSP Headers (Debugger Mode)
+        </label>
+        <p class="exp-desc">
+          This uses Chrome’s debugger API to bypass CSP enforcement on a specific tab.
+          It does not modify headers — it disables CSP at the browser engine level.
+        </p>
+      </div>
+
+      <label>
+        Target Tab for CSP Disable:
+        <select id="expCSPTabSelect"></select>
+      </label>
+
+      <button id="applyExperimental">Apply Experimental Settings</button>
+
+      <pre id="experimentalOutput"></pre>
     </section>
 
   </main>
