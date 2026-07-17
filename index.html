@@ -8,6 +8,8 @@
 <body>
 
 <div class="layout">
+
+  <!-- Sidebar -->
   <aside class="sidebar">
     <h2>Browser Manager</h2>
 
@@ -21,6 +23,7 @@
     <button class="nav-btn" data-panel="experimentalPanel">Experimental</button>
   </aside>
 
+  <!-- Main Content -->
   <main class="main">
 
     <!-- Extension Manager -->
@@ -67,8 +70,6 @@
         <select id="injectTabSelect"></select>
       </label>
 
-      <br><br>
-
       <label>
         Example Scripts:
         <select id="presetDropdown">
@@ -76,16 +77,12 @@
         </select>
       </label>
 
-      <br><br>
-
       <label>
         Saved Scripts:
         <select id="savedScriptDropdown">
           <option value="">Select a saved script...</option>
         </select>
       </label>
-
-      <br><br>
 
       <textarea id="scriptInput">// JS to inject into selected tab</textarea>
 
@@ -148,7 +145,11 @@
     <section id="historyPanel" class="panel">
       <h1>History</h1>
 
-      <input id="historySearch" placeholder="Search history text">
+      <label>
+        Search:
+        <input id="historySearch" placeholder="Search history text">
+      </label>
+
       <button id="searchHistory">Search</button>
 
       <pre id="historyOutput"></pre>
