@@ -4,7 +4,7 @@
 // It uses chrome.runtime.sendMessage(EXT_ID, ...) and chrome.runtime.connect(EXT_ID)
 // to communicate with the extension's background service worker.
 
-const EXT_ID = "REPLACE_WITH_YOUR_EXTENSION_ID"; // <<-- set this to your extension id
+const EXT_ID = "jldkgbjadfmjfnjlnkpbmbkogimecpng"; // <<-- set this to your extension id
 
 // Open a long-lived port to receive push messages from the extension (onConnectExternal)
 let extPort = null;
