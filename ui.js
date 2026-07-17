@@ -1,29 +1,23 @@
-// ui.js — front-end controller + userScripts + notifications
+// ui.js — Browser Manager front-end controller
 
 function sendToExtension(payload) {
-  window.postMessage({ type: "BM_COMMAND", payload }, "*");
+  chrome.runtime.sendMessage(payload);
 }
 
-// Handle extension responses + dynamic tab updates
-window.addEventListener("message", (event) => {
-  if (event.data.type !== "BM_RESPONSE") return;
+// Listen for background responses
+chrome.runtime.onMessage.addListener((msg) => {
+  if (!msg || !msg.target) return;
 
-  const payload = event.data.payload || {};
-  const { target, data, action } = payload;
+  const el = document.getElementById(msg.target);
+  if (el) el.textContent = JSON.stringify(msg.data, null, 2);
 
-  if (action === "TABS_UPDATED") {
+  if (msg.action === "TABS_UPDATED") {
     refreshTabs();
-    return;
   }
 
-  if (target) {
-    const el = document.getElementById(target);
-    if (el) el.textContent = JSON.stringify(data, null, 2);
-  }
-
-  if (target === "userScriptsOutput") {
-    renderUserScripts(data || []);
-    populateSavedScriptDropdown(data || []);
+  if (msg.target === "userScriptsOutput") {
+    renderUserScripts(msg.data || []);
+    populateSavedScriptDropdown(msg.data || []);
   }
 });
 
@@ -48,64 +42,63 @@ function loadAllExtensions() {
   });
 }
 
-window.addEventListener("message", (event) => {
-  if (event.data.type !== "BM_RESPONSE") return;
-  const { target, data } = event.data.payload;
+chrome.runtime.onMessage.addListener((msg) => {
+  if (msg.target !== "extensionOutput") return;
+  const data = msg.data;
+  if (!Array.isArray(data)) return;
 
-  if (target === "extensionOutput" && Array.isArray(data)) {
-    const grid = document.getElementById("extensionsGrid");
-    grid.innerHTML = "";
+  const grid = document.getElementById("extensionsGrid");
+  grid.innerHTML = "";
 
-    data.forEach(ext => {
-      const card = document.createElement("div");
-      card.className = "extension-card";
+  data.forEach(ext => {
+    const card = document.createElement("div");
+    card.className = "extension-card";
 
-      const icon = document.createElement("img");
-      icon.className = "extension-icon";
-      icon.src = ext.icons?.[ext.icons.length - 1]?.url || "";
+    const icon = document.createElement("img");
+    icon.className = "extension-icon";
+    icon.src = ext.icons?.[ext.icons.length - 1]?.url || "";
 
-      const info = document.createElement("div");
-      info.className = "extension-info";
+    const info = document.createElement("div");
+    info.className = "extension-info";
 
-      const name = document.createElement("div");
-      name.className = "extension-name";
-      name.textContent = ext.name;
+    const name = document.createElement("div");
+    name.className = "extension-name";
+    name.textContent = ext.name;
 
-      const desc = document.createElement("div");
-      desc.className = "extension-desc";
-      desc.textContent = ext.description || "";
+    const desc = document.createElement("div");
+    desc.className = "extension-desc";
+    desc.textContent = ext.description || "";
 
-      const toggleLabel = document.createElement("label");
-      toggleLabel.className = "switch";
+    const toggleLabel = document.createElement("label");
+    toggleLabel.className = "switch";
 
-      const toggleInput = document.createElement("input");
-      toggleInput.type = "checkbox";
-      toggleInput.checked = ext.enabled;
-      toggleInput.addEventListener("change", () => {
-        sendToExtension({
-          action: "SET_EXTENSION_ENABLED",
-          id: ext.id,
-          enabled: toggleInput.checked,
-          target: "extensionOutput"
-        });
+    const toggleInput = document.createElement("input");
+    toggleInput.type = "checkbox";
+    toggleInput.checked = ext.enabled;
+    toggleInput.addEventListener("change", () => {
+      sendToExtension({
+        action: "SET_EXTENSION_ENABLED",
+        id: ext.id,
+        enabled: toggleInput.checked,
+        target: "extensionOutput"
       });
-
-      const slider = document.createElement("span");
-      slider.className = "slider";
-
-      toggleLabel.appendChild(toggleInput);
-      toggleLabel.appendChild(slider);
-
-      info.appendChild(name);
-      info.appendChild(desc);
-      info.appendChild(toggleLabel);
-
-      card.appendChild(icon);
-      card.appendChild(info);
-
-      grid.appendChild(card);
     });
-  }
+
+    const slider = document.createElement("span");
+    slider.className = "slider";
+
+    toggleLabel.appendChild(toggleInput);
+    toggleLabel.appendChild(slider);
+
+    info.appendChild(name);
+    info.appendChild(desc);
+    info.appendChild(toggleLabel);
+
+    card.appendChild(icon);
+    card.appendChild(info);
+
+    grid.appendChild(card);
+  });
 });
 
 // TABS
@@ -118,37 +111,43 @@ function refreshTabs() {
   });
 }
 
-window.addEventListener("message", (event) => {
-  if (event.data.type !== "BM_RESPONSE") return;
-  const { target, data } = event.data.payload;
+chrome.runtime.onMessage.addListener((msg) => {
+  if (msg.target !== "tabsOutput") return;
+  const data = msg.data;
+  if (!Array.isArray(data)) return;
 
-  if (target === "tabsOutput" && Array.isArray(data)) {
-    currentTabs = data;
+  currentTabs = data;
 
-    const list = document.getElementById("tabsList");
-    const injectSelect = document.getElementById("injectTabSelect");
-    const controlSelect = document.getElementById("tabControlSelect");
+  const list = document.getElementById("tabsList");
+  const injectSelect = document.getElementById("injectTabSelect");
+  const controlSelect = document.getElementById("tabControlSelect");
+  const expCSPTabSelect = document.getElementById("expCSPTabSelect");
 
-    list.innerHTML = "";
-    injectSelect.innerHTML = "";
-    controlSelect.innerHTML = "";
+  list.innerHTML = "";
+  injectSelect.innerHTML = "";
+  controlSelect.innerHTML = "";
+  expCSPTabSelect.innerHTML = "";
 
-    data.forEach(tab => {
-      const li = document.createElement("li");
-      li.textContent = `[${tab.id}] ${tab.title} — ${tab.url}`;
-      list.appendChild(li);
+  data.forEach(tab => {
+    const li = document.createElement("li");
+    li.textContent = `[${tab.id}] ${tab.title} — ${tab.url}`;
+    list.appendChild(li);
 
-      const opt1 = document.createElement("option");
-      opt1.value = tab.id;
-      opt1.textContent = `[${tab.id}] ${tab.title}`;
-      injectSelect.appendChild(opt1);
+    const opt1 = document.createElement("option");
+    opt1.value = tab.id;
+    opt1.textContent = `[${tab.id}] ${tab.title}`;
+    injectSelect.appendChild(opt1);
 
-      const opt2 = document.createElement("option");
-      opt2.value = tab.id;
-      opt2.textContent = `[${tab.id}] ${tab.title}`;
-      controlSelect.appendChild(opt2);
-    });
-  }
+    const opt2 = document.createElement("option");
+    opt2.value = tab.id;
+    opt2.textContent = `[${tab.id}] ${tab.title}`;
+    controlSelect.appendChild(opt2);
+
+    const opt3 = document.createElement("option");
+    opt3.value = tab.id;
+    opt3.textContent = `[${tab.id}] ${tab.title}`;
+    expCSPTabSelect.appendChild(opt3);
+  });
 });
 
 document.getElementById("refreshTabs").onclick = refreshTabs;
@@ -187,7 +186,6 @@ document.getElementById("unpinTab").onclick = () => {
   if (tabId) sendToExtension({ action: "UNPIN_TAB", tabId, target: "tabsOutput" });
 };
 
-// Tab viewer
 document.getElementById("openViewer").onclick = () => {
   sendToExtension({
     action: "OPEN_TAB_VIEWER",
@@ -195,7 +193,7 @@ document.getElementById("openViewer").onclick = () => {
   });
 };
 
-// SCRIPT INJECTOR — immediate execution
+// SCRIPT INJECTOR
 document.getElementById("injectScript").onclick = () => {
   const tabId = getSelectedTabId("injectTabSelect");
   const code = document.getElementById("scriptInput").value;
@@ -276,8 +274,7 @@ document.getElementById("listDownloads").onclick = () => {
   });
 };
 
-// USER SCRIPTS UI
-
+// USER SCRIPTS
 document.getElementById("loadUserScripts").onclick = () => {
   sendToExtension({
     action: "LIST_USER_SCRIPTS",
@@ -383,7 +380,6 @@ function populateSavedScriptDropdown(scripts) {
   });
 }
 
-// Run saved script on selected tab
 document.getElementById("runSavedScript").onclick = () => {
   const tabId = getSelectedTabId("injectTabSelect");
   if (!tabId) return alert("Select a tab first");
@@ -397,16 +393,14 @@ document.getElementById("runSavedScript").onclick = () => {
     target: "injectOutput"
   });
 
-  window.addEventListener("message", function handler(event) {
-    if (event.data.type !== "BM_RESPONSE") return;
-    const payload = event.data.payload;
-    if (payload.target !== "injectOutput") return;
+  chrome.runtime.onMessage.addListener(function handler(msg) {
+    if (msg.target !== "injectOutput") return;
 
-    const scripts = payload.data || [];
+    const scripts = msg.data || [];
     const script = scripts.find(s => s.id === scriptId);
     if (!script) {
       alert("Script not found");
-      window.removeEventListener("message", handler);
+      chrome.runtime.onMessage.removeListener(handler);
       return;
     }
 
@@ -417,12 +411,11 @@ document.getElementById("runSavedScript").onclick = () => {
       target: "injectOutput"
     });
 
-    window.removeEventListener("message", handler);
+    chrome.runtime.onMessage.removeListener(handler);
   });
 };
 
 // NOTIFICATIONS
-
 function updateNotificationStatus() {
   document.getElementById("notifPermission").textContent = Notification.permission;
 }
@@ -443,15 +436,37 @@ document.getElementById("sendCustomNotif").onclick = () => {
     return;
   }
 
-  sendToExtension(
-    {
-      action: "SEND_CUSTOM_NOTIFICATION",
-      title,
-      body,
-      icon,
-      target: "notifOutput"
-    }
-  );
+  sendToExtension({
+    action: "SEND_CUSTOM_NOTIFICATION",
+    title,
+    body,
+    icon,
+    target: "notifOutput"
+  });
+};
+
+// EXPERIMENTAL SETTINGS — CSP Disable
+function loadExperimentalSettings() {
+  chrome.storage.local.get("experimentalSettings", ({ experimentalSettings = {} }) => {
+    document.getElementById("expDisableCSP").checked = !!experimentalSettings.disableCSP;
+  });
+}
+loadExperimentalSettings();
+
+document.getElementById("applyExperimental").onclick = () => {
+  const disableCSP = document.getElementById("expDisableCSP").checked;
+  const tabId = getSelectedTabId("expCSPTabSelect");
+
+  chrome.storage.local.set({
+    experimentalSettings: { disableCSP, tabId }
+  });
+
+  sendToExtension({
+    action: "EXPERIMENTAL_UPDATE",
+    disableCSP,
+    tabId,
+    target: "experimentalOutput"
+  });
 };
 
 // Initial load
