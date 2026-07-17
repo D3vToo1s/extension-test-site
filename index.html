@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8">
   <title>Browser Manager Console</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <link rel="stylesheet" href="ui.css">
 </head>
 <body>
@@ -18,8 +19,6 @@
     <button class="nav-btn" data-panel="historyPanel">History</button>
     <button class="nav-btn" data-panel="downloadsPanel">Downloads</button>
     <button class="nav-btn" data-panel="notificationsPanel">Notifications</button>
-
-    <!-- ⭐ NEW BUTTON -->
     <button class="nav-btn" data-panel="experimentalPanel">Experimental</button>
   </aside>
 
@@ -69,16 +68,12 @@
         <select id="injectTabSelect"></select>
       </label>
 
-      <br><br>
-
-      <label>
+      <label class="presets">
         Example Scripts:
         <select id="presetDropdown">
           <option value="">Select a preset...</option>
         </select>
       </label>
-
-      <br><br>
 
       <label>
         Saved Scripts:
@@ -87,12 +82,12 @@
         </select>
       </label>
 
-      <br><br>
-
       <textarea id="scriptInput">// JS to inject into selected tab</textarea>
 
-      <button id="injectScript">Inject Script</button>
-      <button id="runSavedScript">Run Saved Script (Selected)</button>
+      <div style="margin-top:10px">
+        <button id="injectScript">Inject Script</button>
+        <button id="runSavedScript">Run Saved Script (Selected)</button>
+      </div>
 
       <pre id="injectOutput"></pre>
     </section>
@@ -137,8 +132,10 @@
           <textarea id="usCode" placeholder="// JS that will run via chrome.userScripts"></textarea>
         </label>
 
-        <button id="saveUserScript">Save Script</button>
-        <button id="loadUserScripts">Reload Saved Scripts</button>
+        <div style="margin-top:10px">
+          <button id="saveUserScript">Save Script</button>
+          <button id="loadUserScripts">Reload Saved Scripts</button>
+        </div>
       </div>
 
       <h2>Saved Scripts</h2>
@@ -198,7 +195,7 @@
       <pre id="notifOutput"></pre>
     </section>
 
-    <!-- ⭐ EXPERIMENTAL SETTINGS -->
+    <!-- Experimental Settings -->
     <section id="experimentalPanel" class="panel">
       <h1>Experimental Settings</h1>
 
@@ -225,6 +222,12 @@
 
   </main>
 </div>
+
+<script>
+  // Set your extension ID here so the website UI can communicate with the extension.
+  // Replace the placeholder with the actual extension ID from chrome://extensions
+  window.EXT_ID = "jldkgbjadfmjfnjlnkpbmbkogimecpng";
+</script>
 
 <script src="ui.js"></script>
 </body>
