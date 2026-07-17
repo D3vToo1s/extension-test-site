@@ -19,7 +19,7 @@
     <button class="nav-btn" data-panel="downloadsPanel">Downloads</button>
     <button class="nav-btn" data-panel="notificationsPanel">Notifications</button>
 
-    <!-- ⭐ NEW BUTTON -->
+    <!-- Experimental Settings Button -->
     <button class="nav-btn" data-panel="experimentalPanel">Experimental</button>
   </aside>
 
@@ -69,8 +69,6 @@
         <select id="injectTabSelect"></select>
       </label>
 
-      <br><br>
-
       <label>
         Example Scripts:
         <select id="presetDropdown">
@@ -78,16 +76,12 @@
         </select>
       </label>
 
-      <br><br>
-
       <label>
         Saved Scripts:
         <select id="savedScriptDropdown">
           <option value="">Select a saved script...</option>
         </select>
       </label>
-
-      <br><br>
 
       <textarea id="scriptInput">// JS to inject into selected tab</textarea>
 
@@ -198,7 +192,7 @@
       <pre id="notifOutput"></pre>
     </section>
 
-    <!-- ⭐ EXPERIMENTAL SETTINGS -->
+    <!-- Experimental Settings -->
     <section id="experimentalPanel" class="panel">
       <h1>Experimental Settings</h1>
 
