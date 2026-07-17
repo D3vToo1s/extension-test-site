@@ -14,8 +14,7 @@
 
     <button class="nav-btn active" data-panel="extensionPanel">Extension Manager</button>
     <button class="nav-btn" data-panel="tabsPanel">Tab Manager</button>
-    <button class="nav-btn" data-panel="injectPanel">Script Injector</button>
-    <button class="nav-btn" data-panel="userScriptsPanel">Saved Scripts</button>
+    <button class="nav-btn" data-panel="scriptsPanel">Scripts</button>
     <button class="nav-btn" data-panel="historyPanel">History</button>
     <button class="nav-btn" data-panel="downloadsPanel">Downloads</button>
     <button class="nav-btn" data-panel="notificationsPanel">Notifications</button>
@@ -59,88 +58,96 @@
       <pre id="tabsOutput"></pre>
     </section>
 
-    <!-- Script Injector -->
-    <section id="injectPanel" class="panel">
-      <h1>Script Injector</h1>
+    <!-- Scripts (merged injector + saved scripts) -->
+    <section id="scriptsPanel" class="panel">
+      <h1>Scripts</h1>
 
-      <label>
-        Target Tab:
-        <select id="injectTabSelect"></select>
-      </label>
+      <div style="display:flex;gap:12px;align-items:flex-start;">
+        <div style="flex:1;min-width:320px;">
+          <label>
+            Saved Scripts:
+            <select id="savedScriptDropdown">
+              <option value="">Select a saved script...</option>
+            </select>
+          </label>
 
-      <label class="presets">
-        Example Scripts:
-        <select id="presetDropdown">
-          <option value="">Select a preset...</option>
-        </select>
-      </label>
+          <div style="margin-top:8px;">
+            <button id="loadSelectedScript">Load Selected</button>
+            <button id="deleteSelectedScript">Delete Selected</button>
+          </div>
 
-      <label>
-        Saved Scripts:
-        <select id="savedScriptDropdown">
-          <option value="">Select a saved script...</option>
-        </select>
-      </label>
+          <h2 style="margin-top:14px">Script Editor</h2>
 
-      <textarea id="scriptInput">// JS to inject into selected tab</textarea>
+          <label>
+            Script ID (optional)
+            <input id="usId" placeholder="auto-generated if empty">
+          </label>
 
-      <div style="margin-top:10px">
-        <button id="injectScript">Inject Script</button>
-        <button id="runSavedScript">Run Saved Script (Selected)</button>
-      </div>
+          <label>
+            Name
+            <input id="usName" placeholder="My Script">
+          </label>
 
-      <pre id="injectOutput"></pre>
-    </section>
+          <label>
+            Matches (one per line)
+            <textarea id="usMatches" placeholder="<all_urls>"></textarea>
+          </label>
 
-    <!-- Saved Scripts -->
-    <section id="userScriptsPanel" class="panel">
-      <h1>Saved Scripts (userScripts)</h1>
+          <label>
+            runAt
+            <select id="usRunAt">
+              <option value="document_start">document_start</option>
+              <option value="document_end" selected>document_end</option>
+              <option value="document_idle">document_idle</option>
+            </select>
+          </label>
 
-      <div class="user-scripts-editor">
+          <label style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+            <button id="toggleAuto" class="preset-btn">Auto: Off</button>
+            <span id="autoStatus" style="color:#a0a4a8">Auto-execute disabled</span>
+          </label>
 
-        <label>
-          Script ID (optional):
-          <input id="usId" placeholder="auto-generated if empty">
-        </label>
+          <label style="margin-top:10px;">
+            Script code
+            <textarea id="usCode" placeholder="// JS that will run via chrome.userScripts"></textarea>
+          </label>
 
-        <label>
-          Name:
-          <input id="usName" placeholder="My Script">
-        </label>
+          <div style="margin-top:10px;">
+            <button id="saveUserScript">Save Script</button>
+            <button id="saveAndRun">Save & Run (selected tab)</button>
+          </div>
+        </div>
 
-        <label>
-          Matches (one per line):
-          <textarea id="usMatches" placeholder="<all_urls>"></textarea>
-        </label>
+        <div style="flex:1;min-width:320px;">
+          <label>
+            Target Tab:
+            <select id="injectTabSelect"></select>
+          </label>
 
-        <label>
-          runAt:
-          <select id="usRunAt">
-            <option value="document_start">document_start</option>
-            <option value="document_end" selected>document_end</option>
-            <option value="document_idle">document_idle</option>
-          </select>
-        </label>
+          <label class="presets" style="margin-top:8px;">
+            Example Scripts:
+            <select id="presetDropdown">
+              <option value="">Select a preset...</option>
+            </select>
+          </label>
 
-        <label>
-          Auto-execute:
-          <input type="checkbox" id="usAuto">
-        </label>
+          <label style="margin-top:8px;">
+            Quick editor (for one-off runs)
+            <textarea id="scriptInput">// JS to inject into selected tab</textarea>
+          </label>
 
-        <label>
-          Script code:
-          <textarea id="usCode" placeholder="// JS that will run via chrome.userScripts"></textarea>
-        </label>
+          <div style="margin-top:8px;">
+            <button id="injectScript">Inject Script (one-off)</button>
+            <button id="runSavedScript">Run Saved Script (Selected)</button>
+          </div>
 
-        <div style="margin-top:10px">
-          <button id="saveUserScript">Save Script</button>
-          <button id="loadUserScripts">Reload Saved Scripts</button>
+          <h2 style="margin-top:14px">Saved Scripts List</h2>
+          <div id="userScriptsList"></div>
+          <pre id="userScriptsOutput"></pre>
         </div>
       </div>
 
-      <h2>Saved Scripts</h2>
-      <div id="userScriptsList"></div>
-      <pre id="userScriptsOutput"></pre>
+      <pre id="injectOutput"></pre>
     </section>
 
     <!-- History -->
@@ -200,9 +207,9 @@
       <h1>Experimental Settings</h1>
 
       <div class="exp-setting">
-        <label class="exp-label">
-          <input type="checkbox" id="expDisableCSP">
-          Disable all CSP Headers (Debugger Mode)
+        <label class="exp-label" style="display:flex;align-items:center;gap:12px;">
+          <button id="expToggleCSP" style="padding:8px 12px">Disable CSP: Off</button>
+          <span id="expCSPStatus" style="color:#a0a4a8">CSP bypass is currently off</span>
         </label>
         <p class="exp-desc">
           This uses Chrome’s debugger API to bypass CSP enforcement on a specific tab.
@@ -214,8 +221,6 @@
         Target Tab for CSP Disable:
         <select id="expCSPTabSelect"></select>
       </label>
-
-      <button id="applyExperimental">Apply Experimental Settings</button>
 
       <pre id="experimentalOutput"></pre>
     </section>
