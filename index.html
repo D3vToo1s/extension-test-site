@@ -8,8 +8,6 @@
 <body>
 
 <div class="layout">
-
-  <!-- Sidebar -->
   <aside class="sidebar">
     <h2>Browser Manager</h2>
 
@@ -20,10 +18,11 @@
     <button class="nav-btn" data-panel="historyPanel">History</button>
     <button class="nav-btn" data-panel="downloadsPanel">Downloads</button>
     <button class="nav-btn" data-panel="notificationsPanel">Notifications</button>
+
+    <!-- ⭐ NEW BUTTON -->
     <button class="nav-btn" data-panel="experimentalPanel">Experimental</button>
   </aside>
 
-  <!-- Main Content -->
   <main class="main">
 
     <!-- Extension Manager -->
@@ -70,6 +69,8 @@
         <select id="injectTabSelect"></select>
       </label>
 
+      <br><br>
+
       <label>
         Example Scripts:
         <select id="presetDropdown">
@@ -77,12 +78,16 @@
         </select>
       </label>
 
+      <br><br>
+
       <label>
         Saved Scripts:
         <select id="savedScriptDropdown">
           <option value="">Select a saved script...</option>
         </select>
       </label>
+
+      <br><br>
 
       <textarea id="scriptInput">// JS to inject into selected tab</textarea>
 
@@ -145,11 +150,7 @@
     <section id="historyPanel" class="panel">
       <h1>History</h1>
 
-      <label>
-        Search:
-        <input id="historySearch" placeholder="Search history text">
-      </label>
-
+      <input id="historySearch" placeholder="Search history text">
       <button id="searchHistory">Search</button>
 
       <pre id="historyOutput"></pre>
@@ -197,7 +198,7 @@
       <pre id="notifOutput"></pre>
     </section>
 
-    <!-- Experimental Settings -->
+    <!-- ⭐ EXPERIMENTAL SETTINGS -->
     <section id="experimentalPanel" class="panel">
       <h1>Experimental Settings</h1>
 
