@@ -1,7 +1,7 @@
 // ui.js — Website UI controller (Scripts integrated with userScripts flow)
 // Requires window.EXT_ID to be set in index.html to your extension ID.
 
-const EXT_ID = window.EXT_ID || "jldkgbjadfmjfnjlnkpbmbkogimecpng";
+const EXT_ID = window.EXT_ID || "REPLACE_WITH_YOUR_EXTENSION_ID";
 
 function sendToExtension(payload, timeoutMs = 10000) {
   return new Promise((resolve, reject) => {
@@ -111,7 +111,7 @@ function renderExtensions(exts) {
     const name = document.createElement("div"); name.className="extension-name"; name.textContent = ext.name || ext.id;
     const desc = document.createElement("div"); desc.className="extension-desc"; desc.textContent = ext.description || "";
     const toggleLabel = document.createElement("label"); toggleLabel.className="switch";
-    const toggleInput = document.createElement("input"); toggleInput.type="checkbox"; toggleInput.checked = !!ext.enabled;
+    const toggleInput = document.createElement("input"); toggleInput.type = "checkbox"; toggleInput.checked = !!ext.enabled;
     toggleInput.addEventListener("change", async ()=>{
       try {
         await sendToExtension({ action: "SET_EXTENSION_ENABLED", id: ext.id, enabled: toggleInput.checked, target: "extensionOutput" });
@@ -221,6 +221,7 @@ function renderUserScripts(scripts) {
       $("usCode").value = script.code || "";
       $("usRunAt").value = script.runAt || "document_end";
       $("toggleAuto").textContent = script.auto ? "Auto: On" : "Auto: Off";
+      $("toggleAuto").dataset.auto = script.auto ? "true" : "false";
       $("autoStatus").textContent = script.auto ? "Auto-execute enabled" : "Auto-execute disabled";
     };
     const del = document.createElement("button"); del.textContent="Delete"; del.onclick = async ()=>{
@@ -414,27 +415,59 @@ $("sendCustomNotif").onclick = async () => {
 };
 
 // -----------------------------
-// Experimental CSP toggle (button)
+// Experimental CSP toggle (static declarativeNetRequest ruleset integration)
 // -----------------------------
-let expCSPEnabled = false;
-async function setCSPToggleState(enabled, tabId) {
+// This replaces the previous debugger-based approach and toggles the static ruleset declared in manifest.rule_resources.
+// It sends EXPRIMENTAL_UPDATE with useStaticRuleset: true so the background enables/disables the "csp_ruleset".
+
+let cspRulesetEnabled = false;
+
+function updateCspToggleUI(enabled) {
+  cspRulesetEnabled = !!enabled;
+  const btn = document.getElementById("expToggleCSP");
+  const status = document.getElementById("expCSPStatus");
+  if (btn) btn.textContent = `Remove CSP Headers: ${cspRulesetEnabled ? "On" : "Off"}`;
+  if (status) status.textContent = cspRulesetEnabled ? "CSP removal active (static ruleset)" : "CSP removal inactive";
+}
+
+async function toggleStaticCspForTab() {
+  const tabSel = document.getElementById("expCSPTabSelect");
+  const out = document.getElementById("experimentalOutput");
+  const tabId = parseInt(tabSel?.value || 0, 10);
+  if (!tabId) {
+    alert("Select a tab to scope the action (UI uses tab for context).");
+    return;
+  }
+
+  const newState = !cspRulesetEnabled;
+  if (out) out.textContent = "Updating ruleset…";
+
   try {
-    const resp = await sendToExtension({ action:"EXPERIMENTAL_UPDATE", disableCSP: enabled, tabId, target:"experimentalOutput" });
-    if ($("experimentalOutput")) $("experimentalOutput").textContent = JSON.stringify(resp, null, 2);
-    expCSPEnabled = !!enabled;
-    $("expToggleCSP").textContent = `Disable CSP: ${expCSPEnabled ? "On" : "Off"}`;
-    $("expCSPStatus").textContent = expCSPEnabled ? "CSP bypass is currently on" : "CSP bypass is currently off";
-  } catch (e) {
-    console.error("setCSPToggleState", e);
-    if ($("experimentalOutput")) $("experimentalOutput").textContent = String(e);
+    const resp = await sendToExtension({
+      action: "EXPERIMENTAL_UPDATE",
+      disableCSP: newState,
+      tabId,
+      useStaticRuleset: true,
+      target: "experimentalOutput"
+    });
+
+    const data = resp?.data ?? resp;
+    if (data?.error) {
+      if (out) out.textContent = `Error: ${data.error}`;
+      return;
+    }
+
+    updateCspToggleUI(newState);
+    if (out) out.textContent = JSON.stringify(data, null, 2);
+  } catch (err) {
+    if (out) out.textContent = `RPC error: ${String(err)}`;
   }
 }
 
-$("expToggleCSP").onclick = async () => {
-  const tabId = getSelectedTabId("expCSPTabSelect");
-  if (!tabId) return alert("Select a tab for CSP toggle");
-  await setCSPToggleState(!expCSPEnabled, tabId);
-};
+$("expToggleCSP").onclick = toggleStaticCspForTab;
+
+// Initialize CSP UI to off (background is authoritative; UI assumes off until toggled)
+updateCspToggleUI(false);
 
 // -----------------------------
 // Initial load
