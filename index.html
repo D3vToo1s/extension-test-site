@@ -1,150 +1,239 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Browser Manager — Scripts</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <link rel="stylesheet" href="ui.css" />
+  <meta charset="utf-8">
+  <title>Browser Manager Console</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="ui.css">
 </head>
 <body>
-  <div class="layout">
-    <aside class="sidebar">
-      <h2>Browser Manager</h2>
 
-      <button class="nav-btn" data-panel="extensionPanel">Extensions</button>
-      <button class="nav-btn" data-panel="tabsPanel">Tabs</button>
-      <button class="nav-btn active" data-panel="scriptsPanel">Scripts</button>
-      <button class="nav-btn" data-panel="experimentalPanel">Experimental</button>
-    </aside>
+<div class="layout">
+  <aside class="sidebar">
+    <h2>Browser Manager</h2>
 
-    <main class="main">
-      <!-- Extensions (placeholder) -->
-      <section id="extensionPanel" class="panel">
-        <h1>Extensions</h1>
-        <div id="extensionsGrid"></div>
-        <pre id="extensionOutput"></pre>
-      </section>
+    <button class="nav-btn active" data-panel="extensionPanel">Extension Manager</button>
+    <button class="nav-btn" data-panel="tabsPanel">Tab Manager</button>
+    <button class="nav-btn" data-panel="scriptsPanel">Scripts</button>
+    <button class="nav-btn" data-panel="historyPanel">History</button>
+    <button class="nav-btn" data-panel="downloadsPanel">Downloads</button>
+    <button class="nav-btn" data-panel="notificationsPanel">Notifications</button>
+    <button class="nav-btn" data-panel="experimentalPanel">Experimental</button>
+  </aside>
 
-      <!-- Tabs -->
-      <section id="tabsPanel" class="panel">
-        <h1>Tabs</h1>
-        <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px">
-          <button id="refreshTabs">Refresh</button>
-          <label style="margin-left:8px">
-            Target
-            <select id="tabControlSelect"></select>
-          </label>
-        </div>
+  <main class="main">
 
-        <div class="tab-buttons" style="margin-bottom:12px">
-          <button id="reloadTab">Reload</button>
+    <!-- Extension Manager -->
+    <section id="extensionPanel" class="panel active">
+      <h1>Extension Manager</h1>
+      <div id="extensionsGrid"></div>
+      <pre id="extensionOutput"></pre>
+    </section>
+
+    <!-- Tab Manager -->
+    <section id="tabsPanel" class="panel">
+      <h1>Tab Manager</h1>
+
+      <button id="refreshTabs">Refresh Tabs</button>
+      <ul id="tabsList"></ul>
+
+      <div class="tab-controls">
+        <label>
+          Target Tab:
+          <select id="tabControlSelect"></select>
+        </label>
+
+        <div class="tab-buttons">
           <button id="closeTab">Close</button>
+          <button id="reloadTab">Reload</button>
           <button id="muteTab">Mute</button>
           <button id="unmuteTab">Unmute</button>
+          <button id="pinTab">Pin</button>
+          <button id="unpinTab">Unpin</button>
         </div>
+      </div>
 
-        <ul id="tabsList"></ul>
-        <pre id="tabsOutput"></pre>
-      </section>
+      <h2>Tab Viewer</h2>
+      <button id="openViewer">Open Tab Viewer Page</button>
+      <pre id="tabsOutput"></pre>
+    </section>
 
-      <!-- Scripts (clean, focused) -->
-      <section id="scriptsPanel" class="panel active">
-        <h1>Scripts</h1>
+    <!-- Scripts (merged injector + saved scripts) -->
+    <section id="scriptsPanel" class="panel">
+      <h1>Scripts</h1>
 
-        <div class="scripts-grid" style="display:flex;gap:18px;align-items:flex-start">
-          <!-- Left: saved scripts -->
-          <div style="width:300px">
-            <label>
-              Saved
-              <select id="savedScriptDropdown" style="width:100%;margin-top:6px">
-                <option value="">— select —</option>
-              </select>
-            </label>
+      <div style="display:flex;gap:12px;align-items:flex-start;">
+        <div style="flex:1;min-width:320px;">
+          <label>
+            Saved Scripts:
+            <select id="savedScriptDropdown">
+              <option value="">Select a saved script...</option>
+            </select>
+          </label>
 
-            <div style="display:flex;gap:8px;margin-top:8px">
-              <button id="loadSelectedScript">Load</button>
-              <button id="deleteSelectedScript">Delete</button>
-            </div>
-
-            <h2 style="margin-top:14px">List</h2>
-            <div id="userScriptsList" style="max-height:520px;overflow:auto;padding-top:8px"></div>
+          <div style="margin-top:8px;">
+            <button id="loadSelectedScript">Load Selected</button>
+            <button id="deleteSelectedScript">Delete Selected</button>
           </div>
 
-          <!-- Right: editor + quick run -->
-          <div style="flex:1;min-width:420px">
-            <div style="display:flex;gap:12px;align-items:center">
-              <label style="flex:1">
-                Name
-                <input id="usName" placeholder="Script name" style="width:100%;margin-top:6px">
-              </label>
+          <h2 style="margin-top:14px">Script Editor</h2>
 
-              <div style="width:120px">
-                runAt
-                <select id="usRunAt" style="width:100%;margin-top:6px">
-                  <option value="document_start">document_start</option>
-                  <option value="document_end" selected>document_end</option>
-                  <option value="document_idle">document_idle</option>
-                </select>
-              </div>
-            </div>
+          <label>
+            Script ID (optional)
+            <input id="usId" placeholder="auto-generated if empty">
+          </label>
 
-            <label style="margin-top:10px">
-              Matches (one per line)
-              <textarea id="usMatches" placeholder="<all_urls>" style="margin-top:6px"></textarea>
-            </label>
+          <label>
+            Name
+            <input id="usName" placeholder="My Script">
+          </label>
 
-            <label style="margin-top:10px">
-              Script code
-              <textarea id="usCode" placeholder="// JS for chrome.userScripts" style="margin-top:6px;height:220px"></textarea>
-            </label>
+          <label>
+            Matches (one per line)
+            <textarea id="usMatches" placeholder="<all_urls>"></textarea>
+          </label>
 
-            <div style="display:flex;gap:8px;margin-top:10px">
-              <button id="saveUserScript">Save</button>
-              <button id="saveAndRun">Save & Run</button>
-              <button id="toggleAuto" data-auto="false">Auto: Off</button>
-            </div>
+          <label>
+            runAt
+            <select id="usRunAt">
+              <option value="document_start">document_start</option>
+              <option value="document_end" selected>document_end</option>
+              <option value="document_idle">document_idle</option>
+            </select>
+          </label>
 
-            <hr style="margin:14px 0">
+          <label style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+            <button id="toggleAuto" class="preset-btn">Auto: Off</button>
+            <span id="autoStatus" style="color:#a0a4a8">Auto-execute disabled</span>
+          </label>
 
-            <label>
-              Quick editor (one-off)
-              <textarea id="scriptInput" style="margin-top:6px">// one-off JS</textarea>
-            </label>
+          <label style="margin-top:10px;">
+            Script code
+            <textarea id="usCode" placeholder="// JS that will run via chrome.userScripts"></textarea>
+          </label>
 
-            <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
-              <label>
-                Target tab
-                <select id="injectTabSelect" style="margin-left:6px"></select>
-              </label>
-
-              <button id="injectScript">Inject</button>
-              <button id="runSavedScript">Run Saved</button>
-            </div>
-
-            <pre id="injectOutput" style="margin-top:12px"></pre>
+          <div style="margin-top:10px;">
+            <button id="saveUserScript">Save Script</button>
+            <button id="saveAndRun">Save & Run (selected tab)</button>
           </div>
         </div>
-      </section>
 
-      <!-- Experimental -->
-      <section id="experimentalPanel" class="panel">
-        <h1>Experimental</h1>
+        <div style="flex:1;min-width:320px;">
+          <label>
+            Target Tab:
+            <select id="injectTabSelect"></select>
+          </label>
 
-        <div style="display:flex;gap:12px;align-items:center">
-          <button id="expToggleCSP">Disable CSP: Off</button>
-          <select id="expCSPTabSelect"></select>
+          <label class="presets" style="margin-top:8px;">
+            Example Scripts:
+            <select id="presetDropdown">
+              <option value="">Select a preset...</option>
+            </select>
+          </label>
+
+          <label style="margin-top:8px;">
+            Quick editor (for one-off runs)
+            <textarea id="scriptInput">// JS to inject into selected tab</textarea>
+          </label>
+
+          <div style="margin-top:8px;">
+            <button id="injectScript">Inject Script (one-off)</button>
+            <button id="runSavedScript">Run Saved Script (Selected)</button>
+          </div>
+
+          <h2 style="margin-top:14px">Saved Scripts List</h2>
+          <div id="userScriptsList"></div>
+          <pre id="userScriptsOutput"></pre>
         </div>
+      </div>
 
-        <pre id="experimentalOutput" style="margin-top:12px"></pre>
-      </section>
-    </main>
-  </div>
+      <pre id="injectOutput"></pre>
+    </section>
 
-  <script>
-    // Set your extension ID here (chrome://extensions)
-    window.EXT_ID = "jldkgbjadfmjfnjlnkpbmbkogimecpng";
-  </script>
+    <!-- History -->
+    <section id="historyPanel" class="panel">
+      <h1>History</h1>
 
-  <script src="ui.js"></script>
+      <input id="historySearch" placeholder="Search history text">
+      <button id="searchHistory">Search</button>
+
+      <pre id="historyOutput"></pre>
+    </section>
+
+    <!-- Downloads -->
+    <section id="downloadsPanel" class="panel">
+      <h1>Downloads</h1>
+
+      <button id="listDownloads">List Downloads</button>
+      <pre id="downloadsOutput"></pre>
+    </section>
+
+    <!-- Notifications -->
+    <section id="notificationsPanel" class="panel">
+      <h1>Notification Manager</h1>
+
+      <h2>Browser Notification Status</h2>
+      <div id="notifStatusBox">
+        <p>Current permission: <strong id="notifPermission">loading...</strong></p>
+        <button id="requestNotifPermission">Request Permission</button>
+      </div>
+
+      <hr>
+
+      <h2>Send Custom Notification</h2>
+
+      <label>
+        Title:
+        <input id="notifTitle" placeholder="Notification Title">
+      </label>
+
+      <label>
+        Body:
+        <input id="notifBody" placeholder="Notification Body">
+      </label>
+
+      <label>
+        Icon URL (optional):
+        <input id="notifIcon" placeholder="https://example.com/icon.png">
+      </label>
+
+      <button id="sendCustomNotif">Send Notification</button>
+
+      <pre id="notifOutput"></pre>
+    </section>
+
+    <!-- Experimental Settings -->
+    <section id="experimentalPanel" class="panel">
+      <h1>Experimental Settings</h1>
+
+      <div class="exp-setting">
+        <label class="exp-label" style="display:flex;align-items:center;gap:12px;">
+          <button id="expToggleCSP" style="padding:8px 12px">Disable CSP: Off</button>
+          <span id="expCSPStatus" style="color:#a0a4a8">CSP bypass is currently off</span>
+        </label>
+        <p class="exp-desc">
+          This uses Chrome’s debugger API to bypass CSP enforcement on a specific tab.
+          It does not modify headers — it disables CSP at the browser engine level.
+        </p>
+      </div>
+
+      <label>
+        Target Tab for CSP Disable:
+        <select id="expCSPTabSelect"></select>
+      </label>
+
+      <pre id="experimentalOutput"></pre>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  // Set your extension ID here so the website UI can communicate with the extension.
+  // Replace the placeholder with the actual extension ID from chrome://extensions
+  window.EXT_ID = "jldkgbjadfmjfnjlnkpbmbkogimecpng";
+</script>
+
+<script src="ui.js"></script>
 </body>
 </html>
