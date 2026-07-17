@@ -1,7 +1,7 @@
 // ui.js — Website UI controller (Scripts integrated with userScripts flow)
 // Requires window.EXT_ID to be set in index.html to your extension ID.
 
-const EXT_ID = window.EXT_ID || "REPLACE_WITH_YOUR_EXTENSION_ID";
+const EXT_ID = window.EXT_ID || "jldkgbjadfmjfnjlnkpbmbkogimecpng";
 
 function sendToExtension(payload, timeoutMs = 10000) {
   return new Promise((resolve, reject) => {
