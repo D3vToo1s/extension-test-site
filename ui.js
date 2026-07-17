@@ -1,25 +1,39 @@
 // ui.js — Browser Manager front-end controller
 
+function extAvailable() {
+  return typeof chrome !== "undefined" &&
+         chrome.runtime &&
+         chrome.runtime.sendMessage;
+}
+
 function sendToExtension(payload) {
+  if (!extAvailable()) {
+    console.warn("Extension runtime not available; sendToExtension skipped.", payload);
+    return;
+  }
   chrome.runtime.sendMessage(payload);
 }
 
-// Listen for background responses
-chrome.runtime.onMessage.addListener((msg) => {
-  if (!msg || !msg.target) return;
+// Listen for background responses (safe)
+if (extAvailable() && chrome.runtime.onMessage) {
+  chrome.runtime.onMessage.addListener((msg) => {
+    if (!msg || !msg.target) return;
 
-  const el = document.getElementById(msg.target);
-  if (el) el.textContent = JSON.stringify(msg.data, null, 2);
+    const el = document.getElementById(msg.target);
+    if (el) el.textContent = JSON.stringify(msg.data, null, 2);
 
-  if (msg.action === "TABS_UPDATED") {
-    refreshTabs();
-  }
+    if (msg.action === "TABS_UPDATED") {
+      refreshTabs();
+    }
 
-  if (msg.target === "userScriptsOutput") {
-    renderUserScripts(msg.data || []);
-    populateSavedScriptDropdown(msg.data || []);
-  }
-});
+    if (msg.target === "userScriptsOutput") {
+      renderUserScripts(msg.data || []);
+      populateSavedScriptDropdown(msg.data || []);
+    }
+  });
+} else {
+  console.warn("chrome.runtime.onMessage unavailable — running outside extension context.");
+}
 
 // Sidebar navigation
 document.querySelectorAll(".nav-btn").forEach(btn => {
@@ -42,64 +56,66 @@ function loadAllExtensions() {
   });
 }
 
-chrome.runtime.onMessage.addListener((msg) => {
-  if (msg.target !== "extensionOutput") return;
-  const data = msg.data;
-  if (!Array.isArray(data)) return;
+if (extAvailable()) {
+  chrome.runtime.onMessage.addListener((msg) => {
+    if (msg.target !== "extensionOutput") return;
+    const data = msg.data;
+    if (!Array.isArray(data)) return;
 
-  const grid = document.getElementById("extensionsGrid");
-  grid.innerHTML = "";
+    const grid = document.getElementById("extensionsGrid");
+    grid.innerHTML = "";
 
-  data.forEach(ext => {
-    const card = document.createElement("div");
-    card.className = "extension-card";
+    data.forEach(ext => {
+      const card = document.createElement("div");
+      card.className = "extension-card";
 
-    const icon = document.createElement("img");
-    icon.className = "extension-icon";
-    icon.src = ext.icons?.[ext.icons.length - 1]?.url || "";
+      const icon = document.createElement("img");
+      icon.className = "extension-icon";
+      icon.src = ext.icons?.[ext.icons.length - 1]?.url || "";
 
-    const info = document.createElement("div");
-    info.className = "extension-info";
+      const info = document.createElement("div");
+      info.className = "extension-info";
 
-    const name = document.createElement("div");
-    name.className = "extension-name";
-    name.textContent = ext.name;
+      const name = document.createElement("div");
+      name.className = "extension-name";
+      name.textContent = ext.name;
 
-    const desc = document.createElement("div");
-    desc.className = "extension-desc";
-    desc.textContent = ext.description || "";
+      const desc = document.createElement("div");
+      desc.className = "extension-desc";
+      desc.textContent = ext.description || "";
 
-    const toggleLabel = document.createElement("label");
-    toggleLabel.className = "switch";
+      const toggleLabel = document.createElement("label");
+      toggleLabel.className = "switch";
 
-    const toggleInput = document.createElement("input");
-    toggleInput.type = "checkbox";
-    toggleInput.checked = ext.enabled;
-    toggleInput.addEventListener("change", () => {
-      sendToExtension({
-        action: "SET_EXTENSION_ENABLED",
-        id: ext.id,
-        enabled: toggleInput.checked,
-        target: "extensionOutput"
+      const toggleInput = document.createElement("input");
+      toggleInput.type = "checkbox";
+      toggleInput.checked = ext.enabled;
+      toggleInput.addEventListener("change", () => {
+        sendToExtension({
+          action: "SET_EXTENSION_ENABLED",
+          id: ext.id,
+          enabled: toggleInput.checked,
+          target: "extensionOutput"
+        });
       });
+
+      const slider = document.createElement("span");
+      slider.className = "slider";
+
+      toggleLabel.appendChild(toggleInput);
+      toggleLabel.appendChild(slider);
+
+      info.appendChild(name);
+      info.appendChild(desc);
+      info.appendChild(toggleLabel);
+
+      card.appendChild(icon);
+      card.appendChild(info);
+
+      grid.appendChild(card);
     });
-
-    const slider = document.createElement("span");
-    slider.className = "slider";
-
-    toggleLabel.appendChild(toggleInput);
-    toggleLabel.appendChild(slider);
-
-    info.appendChild(name);
-    info.appendChild(desc);
-    info.appendChild(toggleLabel);
-
-    card.appendChild(icon);
-    card.appendChild(info);
-
-    grid.appendChild(card);
   });
-});
+}
 
 // TABS
 let currentTabs = [];
@@ -111,44 +127,46 @@ function refreshTabs() {
   });
 }
 
-chrome.runtime.onMessage.addListener((msg) => {
-  if (msg.target !== "tabsOutput") return;
-  const data = msg.data;
-  if (!Array.isArray(data)) return;
+if (extAvailable()) {
+  chrome.runtime.onMessage.addListener((msg) => {
+    if (msg.target !== "tabsOutput") return;
+    const data = msg.data;
+    if (!Array.isArray(data)) return;
 
-  currentTabs = data;
+    currentTabs = data;
 
-  const list = document.getElementById("tabsList");
-  const injectSelect = document.getElementById("injectTabSelect");
-  const controlSelect = document.getElementById("tabControlSelect");
-  const expCSPTabSelect = document.getElementById("expCSPTabSelect");
+    const list = document.getElementById("tabsList");
+    const injectSelect = document.getElementById("injectTabSelect");
+    const controlSelect = document.getElementById("tabControlSelect");
+    const expCSPTabSelect = document.getElementById("expCSPTabSelect");
 
-  list.innerHTML = "";
-  injectSelect.innerHTML = "";
-  controlSelect.innerHTML = "";
-  expCSPTabSelect.innerHTML = "";
+    list.innerHTML = "";
+    injectSelect.innerHTML = "";
+    controlSelect.innerHTML = "";
+    expCSPTabSelect.innerHTML = "";
 
-  data.forEach(tab => {
-    const li = document.createElement("li");
-    li.textContent = `[${tab.id}] ${tab.title} — ${tab.url}`;
-    list.appendChild(li);
+    data.forEach(tab => {
+      const li = document.createElement("li");
+      li.textContent = `[${tab.id}] ${tab.title} — ${tab.url}`;
+      list.appendChild(li);
 
-    const opt1 = document.createElement("option");
-    opt1.value = tab.id;
-    opt1.textContent = `[${tab.id}] ${tab.title}`;
-    injectSelect.appendChild(opt1);
+      const opt1 = document.createElement("option");
+      opt1.value = tab.id;
+      opt1.textContent = `[${tab.id}] ${tab.title}`;
+      injectSelect.appendChild(opt1);
 
-    const opt2 = document.createElement("option");
-    opt2.value = tab.id;
-    opt2.textContent = `[${tab.id}] ${tab.title}`;
-    controlSelect.appendChild(opt2);
+      const opt2 = document.createElement("option");
+      opt2.value = tab.id;
+      opt2.textContent = `[${tab.id}] ${tab.title}`;
+      controlSelect.appendChild(opt2);
 
-    const opt3 = document.createElement("option");
-    opt3.value = tab.id;
-    opt3.textContent = `[${tab.id}] ${tab.title}`;
-    expCSPTabSelect.appendChild(opt3);
+      const opt3 = document.createElement("option");
+      opt3.value = tab.id;
+      opt3.textContent = `[${tab.id}] ${tab.title}`;
+      expCSPTabSelect.appendChild(opt3);
+    });
   });
-});
+}
 
 document.getElementById("refreshTabs").onclick = refreshTabs;
 
@@ -158,32 +176,32 @@ function getSelectedTabId(selectId) {
 
 document.getElementById("closeTab").onclick = () => {
   const tabId = getSelectedTabId("tabControlSelect");
-  if (tabId) sendToExtension({ action: "CLOSE_TAB", tabId, target: "tabsOutput" });
+  sendToExtension({ action: "CLOSE_TAB", tabId, target: "tabsOutput" });
 };
 
 document.getElementById("reloadTab").onclick = () => {
   const tabId = getSelectedTabId("tabControlSelect");
-  if (tabId) sendToExtension({ action: "RELOAD_TAB", tabId, target: "tabsOutput" });
+  sendToExtension({ action: "RELOAD_TAB", tabId, target: "tabsOutput" });
 };
 
 document.getElementById("muteTab").onclick = () => {
   const tabId = getSelectedTabId("tabControlSelect");
-  if (tabId) sendToExtension({ action: "MUTE_TAB", tabId, target: "tabsOutput" });
+  sendToExtension({ action: "MUTE_TAB", tabId, target: "tabsOutput" });
 };
 
 document.getElementById("unmuteTab").onclick = () => {
   const tabId = getSelectedTabId("tabControlSelect");
-  if (tabId) sendToExtension({ action: "UNMUTE_TAB", tabId, target: "tabsOutput" });
+  sendToExtension({ action: "UNMUTE_TAB", tabId, target: "tabsOutput" });
 };
 
 document.getElementById("pinTab").onclick = () => {
   const tabId = getSelectedTabId("tabControlSelect");
-  if (tabId) sendToExtension({ action: "PIN_TAB", tabId, target: "tabsOutput" });
+  sendToExtension({ action: "PIN_TAB", tabId, target: "tabsOutput" });
 };
 
 document.getElementById("unpinTab").onclick = () => {
   const tabId = getSelectedTabId("tabControlSelect");
-  if (tabId) sendToExtension({ action: "UNPIN_TAB", tabId, target: "tabsOutput" });
+  sendToExtension({ action: "UNPIN_TAB", tabId, target: "tabsOutput" });
 };
 
 document.getElementById("openViewer").onclick = () => {
@@ -265,10 +283,10 @@ document.getElementById("searchHistory").onclick = () => {
   });
 };
 
-// DOWNLOADS
+// DOWNLOADS (fixed typo)
 document.getElementById("listDownloads").onclick = () => {
   sendToExtension({
-    action: "LIST_DOWNLOADLOADS",
+    action: "LIST_DOWNLOADS",
     query: {},
     target: "downloadsOutput"
   });
@@ -393,6 +411,8 @@ document.getElementById("runSavedScript").onclick = () => {
     target: "injectOutput"
   });
 
+  if (!extAvailable()) return;
+
   chrome.runtime.onMessage.addListener(function handler(msg) {
     if (msg.target !== "injectOutput") return;
 
@@ -447,6 +467,8 @@ document.getElementById("sendCustomNotif").onclick = () => {
 
 // EXPERIMENTAL SETTINGS — CSP Disable
 function loadExperimentalSettings() {
+  if (!extAvailable()) return;
+
   chrome.storage.local.get("experimentalSettings", ({ experimentalSettings = {} }) => {
     document.getElementById("expDisableCSP").checked = !!experimentalSettings.disableCSP;
   });
@@ -457,9 +479,11 @@ document.getElementById("applyExperimental").onclick = () => {
   const disableCSP = document.getElementById("expDisableCSP").checked;
   const tabId = getSelectedTabId("expCSPTabSelect");
 
-  chrome.storage.local.set({
-    experimentalSettings: { disableCSP, tabId }
-  });
+  if (extAvailable()) {
+    chrome.storage.local.set({
+      experimentalSettings: { disableCSP, tabId }
+    });
+  }
 
   sendToExtension({
     action: "EXPERIMENTAL_UPDATE",
